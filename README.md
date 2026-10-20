@@ -6,6 +6,9 @@ A local prototype: one shared collateral vault (`CoreVault`) with independent mo
 (Perpetuals, Lending) that lock, unlock and settle collateral through the core.
 
 > ⚠️ Prototype only. Mock tokens, mock oracle, local Anvil chain. Not audited. Never deploy to mainnet.
+> See [docs/LIMITATIONS.md](docs/LIMITATIONS.md).
+
+**Docs:** [Accounting model](docs/ACCOUNTING.md) · [Demo script](docs/DEMO_SCRIPT.md) · [Limitations](docs/LIMITATIONS.md)
 
 ## Repository layout
 ```
@@ -21,7 +24,7 @@ frontend/    React + TypeScript + Vite + wagmi/viem + Tailwind
   src/modules.ts   list of mounted modules (sidebar + routes)
   src/pages/       Portfolio, Vault, Activity, Help, Demo controls
   src/config/      chain, contract addresses (auto-written) and ABIs (generated)
-docs/        ACCOUNTING.md and other design notes
+docs/        ACCOUNTING.md, DEMO_SCRIPT.md, LIMITATIONS.md
 ```
 
 ## Getting started (Windows)
