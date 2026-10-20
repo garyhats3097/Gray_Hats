@@ -8,6 +8,13 @@ export function healthStatus(hf: number | null): { label: string; tone: "positiv
   return { label: "Healthy", tone: "positive" };
 }
 
+/** Always round DOWN so 0.998 shows as 0.99, never as a misleading "1.00". */
+export function fmtHealth(hf: number | null): string {
+  if (hf === null) return "∞";
+  if (hf > 99) return "99+";
+  return (Math.floor(hf * 100) / 100).toFixed(2);
+}
+
 const MAX = 3; // gauge scale: 0 → 3.0+
 const ZONES = [
   { from: 0, to: 1, color: "var(--color-negative)" },
@@ -34,7 +41,7 @@ export function HealthGauge({ hf }: { hf: number | null }) {
 
   return (
     <div className="relative mx-auto w-full max-w-[260px]">
-      <svg viewBox="0 0 200 116" className="w-full" role="img" aria-label={`Health factor ${hf === null ? "not applicable" : hf.toFixed(2)}`}>
+      <svg viewBox="0 0 200 116" className="w-full" role="img" aria-label={`Health factor ${hf === null ? "not applicable" : fmtHealth(hf)}`}>
         {ZONES.map((z) => (
           <path
             key={z.from}
@@ -68,7 +75,7 @@ export function HealthGauge({ hf }: { hf: number | null }) {
         >
           {status.label}
         </span>
-        <span className="tabular text-3xl font-semibold tracking-tight">{hf === null ? "∞" : hf > 99 ? "99+" : hf.toFixed(2)}</span>
+        <span className="tabular text-3xl font-semibold tracking-tight">{fmtHealth(hf)}</span>
       </div>
     </div>
   );

@@ -39,7 +39,7 @@ export default function VaultPage() {
       </div>
 
       <div className="mt-5 grid gap-5 lg:grid-cols-3">
-        <div className="space-y-5 lg:col-span-2">
+        <div className="min-w-0 space-y-5 lg:col-span-2">
           <Card title="Where your collateral is" info="Each module can only lock collateral that is still available, so nothing is counted twice.">
             {s.isLoading ? (
               <Skeleton className="h-52 w-full" />
@@ -105,7 +105,7 @@ export default function VaultPage() {
           </Card>
         </div>
 
-        <Card title="Manage collateral" className="h-fit">
+        <Card title="Manage collateral" className="order-first h-fit lg:order-none">
           <VaultForm />
         </Card>
       </div>

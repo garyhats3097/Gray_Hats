@@ -1,7 +1,7 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import { useAccount } from "wagmi";
-import { Activity, HelpCircle, LayoutGrid, Menu, Vault, X, type LucideIcon } from "lucide-react";
+import { Activity, FlaskConical, HelpCircle, LayoutGrid, Menu, Vault, X, type LucideIcon } from "lucide-react";
 import { MODULES } from "../../modules";
 import { ConnectButton } from "./ConnectButton";
 import { NetworkBadge, WrongNetworkBanner } from "./NetworkBadge";
@@ -18,6 +18,7 @@ const CORE_BOTTOM: NavItem[] = [
   { path: "/activity", label: "Activity", icon: Activity },
   { path: "/help", label: "Help & Setup", icon: HelpCircle },
 ];
+const DEMO: NavItem[] = [{ path: "/demo", label: "Demo controls", icon: FlaskConical }];
 
 function NavGroup({ title, items }: { title?: string; items: NavItem[] }) {
   return (
@@ -60,6 +61,7 @@ function SidebarContent() {
         <NavGroup items={CORE_TOP} />
         <NavGroup title="Modules" items={MODULES.map((m) => ({ path: m.path, label: m.name, icon: m.icon }))} />
         <NavGroup items={CORE_BOTTOM} />
+        <NavGroup title="Prototype" items={DEMO} />
       </nav>
       <div className="rounded-xl border border-dashed border-line-strong px-3 py-2.5 text-[11px] leading-relaxed text-muted">
         <b className="font-semibold text-ink">Prototype</b> · test tokens on a local chain. Not audited.

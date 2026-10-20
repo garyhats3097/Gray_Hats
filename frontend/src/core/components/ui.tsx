@@ -23,7 +23,7 @@ export function Card({
   padded?: boolean;
 }) {
   return (
-    <section className={cx("rounded-[var(--radius-card)] border border-line bg-surface shadow-[var(--shadow-card)]", className)}>
+    <section className={cx("min-w-0 rounded-[var(--radius-card)] border border-line bg-surface shadow-[var(--shadow-card)]", className)}>
       {(title || action) && (
         <header className={cx("flex items-center justify-between gap-3", padded ? "px-5 pt-5 sm:px-6" : "px-5 py-4 sm:px-6")}>
           <h2 className="flex items-center gap-1.5 text-[15px] font-semibold text-ink">
@@ -48,7 +48,7 @@ export function InfoTip({ text }: { text: string }) {
       </button>
       <span
         role="tooltip"
-        className="pointer-events-none absolute left-1/2 top-full z-30 mt-2 w-60 -translate-x-1/2 rounded-lg bg-ink px-3 py-2 text-xs font-normal leading-relaxed text-white opacity-0 shadow-lg transition-opacity group-hover:opacity-100 group-focus-within:opacity-100"
+        className="pointer-events-none absolute left-1/2 top-full z-30 mt-2 hidden w-56 max-w-[70vw] -translate-x-1/2 rounded-lg bg-ink px-3 py-2 text-xs font-normal leading-relaxed text-white shadow-lg group-hover:block group-focus-within:block"
       >
         {text}
       </span>
@@ -73,7 +73,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
       ref={ref}
       disabled={disabled || loading}
       className={cx(
-        "inline-flex items-center justify-center gap-2 rounded-xl font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:cursor-not-allowed disabled:opacity-50",
+        "inline-flex items-center justify-center gap-2 rounded-xl font-medium whitespace-nowrap transition-colors [&_svg]:shrink-0 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:cursor-not-allowed disabled:opacity-50",
         size === "sm" && "h-8 px-3 text-[13px]",
         size === "md" && "h-10 px-4 text-sm",
         size === "lg" && "h-12 px-5 text-[15px]",
@@ -106,7 +106,7 @@ export function Badge({
   return (
     <span
       className={cx(
-        "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium",
+        "inline-flex items-center gap-1 whitespace-nowrap rounded-full px-2 py-0.5 text-xs font-medium",
         tone === "neutral" && "bg-sunken text-muted",
         tone === "accent" && "bg-accent-soft text-accent",
         tone === "positive" && "bg-positive-soft text-positive",
@@ -163,7 +163,7 @@ export function Stat({
 
 export function StatCard(props: Parameters<typeof Stat>[0]) {
   return (
-    <div className="rounded-[var(--radius-card)] border border-line bg-surface p-5 shadow-[var(--shadow-card)]">
+    <div className="min-w-0 rounded-[var(--radius-card)] border border-line bg-surface p-5 shadow-[var(--shadow-card)]">
       <Stat {...props} />
     </div>
   );

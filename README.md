@@ -19,7 +19,7 @@ frontend/    React + TypeScript + Vite + wagmi/viem + Tailwind
   src/core/        app shell, shared UI kit, vault hooks   ← never edited to add a module
   src/modules/     one folder per module (page + module.ts manifest)
   src/modules.ts   list of mounted modules (sidebar + routes)
-  src/pages/       Portfolio, Vault, Activity, Help
+  src/pages/       Portfolio, Vault, Activity, Help, Demo controls
   src/config/      chain, contract addresses (auto-written) and ABIs (generated)
 docs/        ACCOUNTING.md and other design notes
 ```
@@ -59,6 +59,12 @@ npm run dev        # open http://localhost:5173
 ```
 Then set up MetaMask as described on the app's **Help & Setup** page: add the network
 `http://127.0.0.1:8545`, chain ID `31337`, and import Anvil test account #1.
+
+### Demo controls (local only)
+The **Demo controls** page moves the mock ETH price, skips the chain clock forward (so lending
+interest builds up) and lists anything that can be liquidated. It asks the local Anvil node to
+sign as the admin test account, so no private key is stored in the frontend. It does nothing on
+a real network.
 
 After changing a contract: `cd contracts && forge build && cd ../frontend && npm run sync-abis`.
 

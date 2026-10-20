@@ -5,6 +5,7 @@ import PortfolioPage from "./pages/PortfolioPage";
 import VaultPage from "./pages/VaultPage";
 import ActivityPage from "./pages/ActivityPage";
 import HelpPage from "./pages/HelpPage";
+import DemoPage from "./pages/DemoPage";
 
 export default function App() {
   return (
@@ -17,6 +18,7 @@ export default function App() {
         ))}
         <Route path="/activity" element={<ActivityPage />} />
         <Route path="/help" element={<HelpPage />} />
+        <Route path="/demo" element={<DemoPage />} />
         <Route path="*" element={<PortfolioPage />} />
       </Routes>
     </Layout>
