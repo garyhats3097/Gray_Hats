@@ -19,3 +19,7 @@ runs = 256
 runs = 64
 depth = 64
 fail_on_revert = false
+
+[lint]
+# Style notes are noisy for beginners; run `forge lint` manually when wanted.
+lint_on_build = false

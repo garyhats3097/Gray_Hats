@@ -1,0 +1,55 @@
+@import "tailwindcss";
+
+/* Design tokens — light theme only. Use these names in classes, e.g. bg-surface, text-muted. */
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+
+  --color-canvas: #f7f5f2;
+  --color-surface: #ffffff;
+  --color-sunken: #f3f1ed;
+  --color-line: #e9e6e1;
+  --color-line-strong: #d9d6cf;
+
+  --color-ink: #18181b;
+  --color-muted: #6b6a72;
+  --color-subtle: #9a99a1;
+
+  --color-accent: #5b5bd6;
+  --color-accent-hover: #4b4bc4;
+  --color-accent-soft: #eeeefb;
+
+  --color-positive: #0f8a7c;
+  --color-positive-soft: #e3f4f1;
+  --color-warning: #a86f00;
+  --color-warning-mark: #e5a000;
+  --color-warning-soft: #fbf2dc;
+  --color-negative: #d93d42;
+  --color-negative-soft: #fdecec;
+
+  /* Data-viz series: validated pair (indigo / orange) + neutral "free" track */
+  --color-perps: #5b5bd6;
+  --color-lending: #eb6834;
+  --color-free: #dcd9d2;
+
+  --radius-card: 16px;
+  --shadow-card: 0 1px 2px rgb(24 24 27 / 0.04), 0 1px 1px rgb(24 24 27 / 0.02);
+}
+
+html,
+body {
+  background: var(--color-canvas);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Hide number-input spinners */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
