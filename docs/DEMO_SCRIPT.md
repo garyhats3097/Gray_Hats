@@ -181,3 +181,4 @@ Then point to [`LIMITATIONS.md`](LIMITATIONS.md): it's a prototype, and we know 
 | "Wrong network" banner | Click **Switch network**, or pick Anvil (local) in MetaMask |
 | Demo controls show an error | Anvil isn't running at `127.0.0.1:8545` |
 | Liquidation list is empty right after a price change | Wait about 5 seconds; it rescans automatically |
+| Contract addresses changed / the app shows a different vault address | An old Anvil was still running, so you deployed onto it. Close every Anvil terminal, start one fresh `anvil`, deploy again. A fresh deploy always gives the vault address `0xCf7E…0Fc9` |
