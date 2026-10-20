@@ -1,0 +1,14 @@
+# Foundry
+contracts/out/
+contracts/cache/
+contracts/broadcast/*/31337/
+# Node / frontend
+node_modules/
+dist/
+# Secrets — never commit keys
+.env
+.env.*
+!.env.example
+# OS / editor
+.DS_Store
+Thumbs.db
