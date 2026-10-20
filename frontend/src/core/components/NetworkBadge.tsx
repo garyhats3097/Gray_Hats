@@ -28,9 +28,11 @@ export function WrongNetworkBanner() {
   if (!wrong) return null;
   return (
     <div className="mb-6 flex flex-col gap-3 rounded-xl border border-negative/30 bg-negative-soft px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
-      <p className="flex items-center gap-2 text-sm text-ink">
-        <AlertTriangle size={16} className="text-negative" />
-        Your wallet is on an unsupported network. Switch to <b>{anvilLocal.name}</b> (chain {anvilLocal.id}) to continue.
+      <p className="flex items-start gap-2 text-sm text-ink">
+        <AlertTriangle size={16} className="mt-0.5 shrink-0 text-negative" />
+        <span>
+          Your wallet is on an unsupported network. Switch to <b>{anvilLocal.name}</b> (chain {anvilLocal.id}) to continue.
+        </span>
       </p>
       <Button
         size="sm"
