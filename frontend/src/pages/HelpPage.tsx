@@ -17,7 +17,7 @@ export default function HelpPage() {
       <div className="grid gap-5 lg:grid-cols-2">
         <Card title="Add the local network to MetaMask">
           <ol className="space-y-3">
-            <Step n={1}>Make sure Anvil is running (<code className="rounded bg-sunken px-1">anvil</code> in a terminal).</Step>
+            <Step n={1}>Make sure the chain is running (<code className="rounded bg-sunken px-1">./scripts/start-chain.sh</code> in a terminal).</Step>
             <Step n={2}>
               MetaMask → network menu → <b>Add a custom network</b>.
             </Step>
@@ -40,10 +40,10 @@ export default function HelpPage() {
           <Card title="Troubleshooting">
             <ul className="space-y-3 text-sm leading-relaxed">
               <li>
-                <b>"Nonce too high" after restarting Anvil:</b> MetaMask → Settings → Advanced → <b>Clear activity tab data</b>.
+                <b>"Nonce too high" after resetting the chain:</b> MetaMask → Settings → Advanced → <b>Clear activity tab data</b>.
               </li>
               <li>
-                <b>Balances look empty:</b> Anvil restarted and lost its state. Run the deploy script again.
+                <b>Balances look empty:</b> plain <code className="rounded bg-sunken px-1">anvil</code> was started, which forgets everything. Stop it and run <code className="rounded bg-sunken px-1">./scripts/start-chain.sh</code> instead — it keeps your chain between restarts.
               </li>
               <li>
                 <b>"Wrong network":</b> use the Switch network button, or pick {anvilLocal.name} in MetaMask.

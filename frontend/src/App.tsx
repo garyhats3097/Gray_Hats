@@ -6,6 +6,7 @@ import VaultPage from "./pages/VaultPage";
 import ActivityPage from "./pages/ActivityPage";
 import HelpPage from "./pages/HelpPage";
 import DemoPage from "./pages/DemoPage";
+import ExplorerPage from "./pages/ExplorerPage";
 
 export default function App() {
   return (
@@ -19,6 +20,7 @@ export default function App() {
         <Route path="/activity" element={<ActivityPage />} />
         <Route path="/help" element={<HelpPage />} />
         <Route path="/demo" element={<DemoPage />} />
+        <Route path="/explorer" element={<ExplorerPage />} />
         <Route path="*" element={<PortfolioPage />} />
       </Routes>
     </Layout>

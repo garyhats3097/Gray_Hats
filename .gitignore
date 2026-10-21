@@ -13,3 +13,6 @@ dist/
 .DS_Store
 Thumbs.db
 *.tsbuildinfo
+
+# Saved local chain (per computer)
+.anvil/

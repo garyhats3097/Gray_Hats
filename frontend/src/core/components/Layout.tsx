@@ -1,7 +1,7 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import { useAccount } from "wagmi";
-import { Activity, FlaskConical, HelpCircle, LayoutGrid, Menu, Vault, X, type LucideIcon } from "lucide-react";
+import { Activity, Blocks, FlaskConical, HelpCircle, LayoutGrid, Menu, Vault, X, type LucideIcon } from "lucide-react";
 import { MODULES } from "../../modules";
 import { ConnectButton } from "./ConnectButton";
 import { NetworkBadge, WrongNetworkBanner } from "./NetworkBadge";
@@ -16,6 +16,7 @@ const CORE_TOP: NavItem[] = [
 ];
 const CORE_BOTTOM: NavItem[] = [
   { path: "/activity", label: "Activity", icon: Activity },
+  { path: "/explorer", label: "Explorer", icon: Blocks },
   { path: "/help", label: "Help & Setup", icon: HelpCircle },
 ];
 const DEMO: NavItem[] = [{ path: "/demo", label: "Demo controls", icon: FlaskConical }];
@@ -76,7 +77,8 @@ export function Layout({ children }: { children: ReactNode }) {
   const location = useLocation();
   useEffect(() => setMobileOpen(false), [location.pathname]);
 
-  const needsWallet = location.pathname !== "/help";
+  // Help and Explorer are useful without a wallet; everything else needs one.
+  const needsWallet = !["/help", "/explorer"].includes(location.pathname);
 
   return (
     <div className="min-h-screen lg:pl-64">

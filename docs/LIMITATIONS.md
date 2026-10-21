@@ -20,7 +20,7 @@ Legend: 🔴 security / trust risk · 🟡 financial-model simplification · ⚪
 | Collateral token (mUSDC) | **Simulated**: a mock token that anyone can mint for free |
 | ETH/USD price | **Simulated**: a mock oracle whose price the admin sets by hand |
 | Perps pool and lending pool liquidity | **Simulated**: 1,000,000 test mUSDC each, seeded by the deploy script. There are no real liquidity providers or lenders |
-| Blockchain | Local Anvil node only. State is lost when Anvil restarts |
+| Blockchain | Local Anvil node only. `scripts/start-chain.sh` saves it to `.anvil/state.json` on this computer; plain `anvil` forgets everything on restart |
 | Activity history | **Real**: built from contract events. Failed attempts are stored only in the current browser |
 
 ---
@@ -129,6 +129,10 @@ These are the most important limitations. In this prototype the admin and the mo
 - **Demo controls only work on Anvil.** They rely on Anvil signing for its built-in admin account
   and on its time-travel commands.
 - **One network** (Anvil, chain 31337). Contract addresses come from `deployments.json`.
+- **The Explorer reads the last 40 blocks** and every user from `Deposited` events on each new
+  block. Fine for a local demo; a real deployment needs an indexer.
+- **Sharing one chain between computers** exposes Anvil's unlocked test accounts and its
+  developer RPC (time travel, balance edits) to everyone on that network.
 - **Failed and rejected actions** are kept only in the current browser (`localStorage`).
 - **Light theme only** (by design). Basic keyboard and screen-reader support; no full
   accessibility audit.

@@ -22,8 +22,9 @@ frontend/    React + TypeScript + Vite + wagmi/viem + Tailwind
   src/core/        app shell, shared UI kit, vault hooks   ← never edited to add a module
   src/modules/     one folder per module (page + module.ts manifest)
   src/modules.ts   list of mounted modules (sidebar + routes)
-  src/pages/       Portfolio, Vault, Activity, Help, Demo controls
+  src/pages/       Portfolio, Vault, Activity, Explorer, Help, Demo controls
   src/config/      chain, contract addresses (auto-written) and ABIs (generated)
+scripts/     start-chain.sh / reset-chain.sh (saved local chain)
 docs/        ACCOUNTING.md, DEMO_SCRIPT.md, LIMITATIONS.md
 ```
 
@@ -45,23 +46,45 @@ forge test
 If you cloned without `--recurse-submodules`, run `git submodule update --init --recursive`.
 
 ## Running the app locally
-You need three terminals (all inside WSL on Windows).
+Two terminals, both inside WSL on Windows.
 
 ```bash
 # Terminal 1 — local blockchain (leave it running)
-anvil
+./scripts/start-chain.sh
+#   first run: starts Anvil, deploys the contracts, saves the chain to .anvil/state.json
+#   later runs: reloads the saved chain — balances, positions, loans and history are kept
 
-# Terminal 2 — deploy contracts (re-run every time you restart Anvil)
-cd contracts
-forge script script/Deploy.s.sol --rpc-url http://127.0.0.1:8545 --broadcast
-
-# Terminal 3 — frontend
+# Terminal 2 — frontend
 cd frontend
 npm install        # first time only
 npm run dev        # open http://localhost:5173
 ```
 Then set up MetaMask as described on the app's **Help & Setup** page: add the network
 `http://127.0.0.1:8545`, chain ID `31337`, and import Anvil test account #1.
+
+Stop the chain with **Ctrl+C** (it is saved on exit and every 5 seconds).
+To start over with an empty chain: `./scripts/reset-chain.sh`, then `./scripts/start-chain.sh`,
+and in MetaMask: Settings → Advanced → **Clear activity tab data**.
+
+> Don't run `Deploy.s.sol` by hand on a saved chain — it creates new, empty contracts and the
+> app switches to them. `start-chain.sh` only deploys on a fresh chain.
+
+### Several users
+Every wallet address has its own position in the vault.
+- **Same computer:** import Anvil test accounts #2 and #3 into MetaMask (their keys are printed
+  when Anvil starts) and switch accounts. The app follows the account selected in MetaMask.
+- **Several computers sharing one chain:** run the chain and the site on one host computer.
+  Other people point MetaMask at `http://HOST_IP:8545` and open `http://HOST_IP:5173`.
+  On the host, copy `frontend/.env.example` to `frontend/.env.local`, set
+  `VITE_RPC_URL=http://HOST_IP:8545`, and start the site with `npm run dev -- --host`.
+  Windows Firewall must allow ports 8545 and 5173, and WSL needs mirrored networking.
+  Anyone on that network can then use the chain, including its public test keys, so only do
+  this on a network you trust.
+
+### Explorer
+The **Explorer** page shows the chain itself: latest blocks, every transaction with its decoded
+function call and events, a live solvency check of the vault, and every user's position.
+It works without connecting a wallet.
 
 ### Demo controls (local only)
 The **Demo controls** page moves the mock ETH price, skips the chain clock forward (so lending

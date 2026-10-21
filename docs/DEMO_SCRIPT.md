@@ -10,18 +10,16 @@ the screen will show exactly these values.
 
 ## Before the demo (15 minutes earlier)
 
-Do this inside WSL, with three terminals.
+Do this inside WSL, with two terminals. The numbers below assume a **fresh** chain, so reset first.
 
 ```bash
-# Terminal 1 — fresh local blockchain (leave running)
-anvil
+# Terminal 1 — fresh local blockchain + deploy (leave running)
+cd ~/Gray_Hats
+./scripts/reset-chain.sh      # wipes the saved chain (skip if you want to keep it)
+./scripts/start-chain.sh      # starts Anvil, deploys, and saves the chain as you go
 
-# Terminal 2 — deploy everything (seeds pools, funds test accounts)
-cd contracts
-forge script script/Deploy.s.sol --rpc-url http://127.0.0.1:8545 --broadcast
-
-# Terminal 3 — the app
-cd frontend
+# Terminal 2 — the app
+cd ~/Gray_Hats/frontend
 npm run dev          # http://localhost:5173
 ```
 
@@ -34,8 +32,12 @@ In MetaMask:
 
 Have these tabs ready: the app, and the architecture slide from your presentation.
 
-> **Restarting mid-demo:** stop Anvil, start it again, re-run the deploy command, clear
-> MetaMask activity data, and reload the page. It takes about 1 minute.
+> **If the chain stops mid-demo:** run `./scripts/start-chain.sh` again — it reloads the saved
+> chain exactly where you left off. No redeploy, no MetaMask reset needed.
+>
+> **Showing the chain itself:** the **Explorer** page lists every block and transaction live.
+> Click any transaction to show the decoded function call and the events it emitted — a good
+> way to prove the numbers come from the blockchain.
 
 ---
 
@@ -177,7 +179,7 @@ Then point to [`LIMITATIONS.md`](LIMITATIONS.md): it's a prototype, and we know 
 | Symptom | Fix |
 |---|---|
 | "Nonce too high" or transactions stuck | MetaMask → Settings → Advanced → Clear activity tab data |
-| Balances are all zero | Anvil was restarted: re-run the deploy command and reload the page |
+| Balances are all zero | Plain `anvil` was started instead of `./scripts/start-chain.sh`, so the chain is empty. Stop it and run the script |
 | "Wrong network" banner | Click **Switch network**, or pick Anvil (local) in MetaMask |
 | Demo controls show an error | Anvil isn't running at `127.0.0.1:8545` |
 | Liquidation list is empty right after a price change | Wait about 5 seconds; it rescans automatically |
