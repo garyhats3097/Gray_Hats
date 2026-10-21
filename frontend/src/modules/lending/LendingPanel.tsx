@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Info } from "lucide-react";
+import { Link } from "react-router-dom";
 import { maxUint256 } from "viem";
 import { contracts, COLLATERAL_SYMBOL } from "../../config/contracts";
 import { useAccountState } from "../../core/hooks/useAccountState";
@@ -54,7 +55,7 @@ export function LendingPanel() {
     error = {
       supply: "Exceeds your available collateral in the vault",
       borrow: poolLiquidity !== undefined && amount > poolLiquidity ? "Not enough liquidity in the pool" : "Exceeds your borrowing capacity (75% of collateral)",
-      repay: amount > debt ? "More than you owe" : "Exceeds your wallet balance",
+      repay: amount > debt ? `More than you owe (${fmtUsd(debt)})` : "Exceeds your wallet balance",
       withdraw: "That collateral is backing your loan. Repay first.",
     }[action];
   }
@@ -103,49 +104,76 @@ export function LendingPanel() {
   };
   const maxLabel: Record<Action, string> = { supply: "Available in vault", borrow: "Can borrow", repay: "Repayable", withdraw: "Releasable" };
 
+  const switchTo = (v: Action) => {
+    setAction(v);
+    setInput("");
+  };
+
+  // When an action can't be used yet, say why and point to the step that comes first.
+  const blocked: Record<Action, { message: string; go?: Action; vault?: boolean } | null> = {
+    supply: s.free === 0n ? { message: "You have no available collateral in the vault. Deposit mUSDC first.", vault: true } : null,
+    borrow: col === 0n ? { message: "Allocate collateral to Lending first. You can then borrow up to 75% of it.", go: "supply" } : null,
+    repay: debt === 0n ? { message: "You don't have a loan to repay. Borrow first, then come back here to pay it back.", go: "borrow" } : null,
+    withdraw: col === 0n ? { message: "No collateral is allocated to Lending, so there is nothing to release.", go: "supply" } : null,
+  };
+  const block = s.isLoading ? null : blocked[action];
+
   return (
     <div className="space-y-5">
-      <Tabs
-        value={action}
-        onChange={(v) => {
-          setAction(v);
-          setInput("");
-        }}
-        options={(Object.keys(labels) as Action[]).map((k) => ({ value: k, label: labels[k] }))}
-      />
+      <Tabs value={action} onChange={switchTo} options={(Object.keys(labels) as Action[]).map((k) => ({ value: k, label: labels[k] }))} />
 
-      <AmountInput label={inputLabel[action]} value={input} onChange={setInput} max={max} maxLabel={maxLabel[action]} symbol={COLLATERAL_SYMBOL} error={error} disabled={busy} />
-
-      <div className="divide-y divide-line rounded-xl bg-sunken/60 px-3.5">
-        <div className="py-2.5 text-[13px]">
-          <p className="mb-1.5 text-muted">Health factor</p>
-          <div className="flex flex-wrap items-center gap-1.5">
-            <HealthChip hf={s.healthFactor} />
-            {amount !== null && !error && (
-              <>
-                <ArrowRight size={13} className="text-subtle" />
-                <HealthChip hf={healthFor(after.col, after.debt)} />
-              </>
-            )}
-          </div>
+      {block ? (
+        <div className="space-y-4">
+          <Callout icon={<Info size={14} />}>{block.message}</Callout>
+          {block.go && (
+            <Button className="w-full" variant="secondary" onClick={() => switchTo(block.go!)}>
+              Go to {labels[block.go]}
+            </Button>
+          )}
+          {block.vault && (
+            <Link to="/vault" className="block">
+              <Button className="w-full" variant="secondary">
+                Go to Shared Vault
+              </Button>
+            </Link>
+          )}
         </div>
-        <KeyValue label="Collateral in Lending" value={amount !== null && !error && after.col !== col ? `${fmtUsd(col)} → ${fmtUsd(after.col)}` : fmtUsd(col)} />
-        <KeyValue label="Debt" value={amount !== null && !error && after.debt !== debt ? `${fmtUsd(debt)} → ${fmtUsd(after.debt)}` : fmtUsd(debt)} />
-        {action === "borrow" && <KeyValue label="Borrow APR" value="5.00% (simple)" />}
-      </div>
+      ) : (
+        <>
+          <AmountInput label={inputLabel[action]} value={input} onChange={setInput} max={max} maxLabel={maxLabel[action]} symbol={COLLATERAL_SYMBOL} error={error} disabled={busy} />
 
-      {action === "borrow" && (
-        <Callout>Borrowed {COLLATERAL_SYMBOL} comes from the lending pool seeded by the deploy script (test funds) — there are no real lenders in this prototype.</Callout>
-      )}
-      {needsApproval && (
-        <Callout tone="accent">
-          <b>Step 1 of 2:</b> approve the Lending module to take {fmtUsd(repayApproval)} {COLLATERAL_SYMBOL} from your wallet{isFullRepay && " (includes a small buffer for interest)"}. Then confirm the repayment.
-        </Callout>
-      )}
+          <div className="divide-y divide-line rounded-xl bg-sunken/60 px-3.5">
+            <div className="py-2.5 text-[13px]">
+              <p className="mb-1.5 text-muted">Health factor</p>
+              <div className="flex flex-wrap items-center gap-1.5">
+                <HealthChip hf={s.healthFactor} />
+                {amount !== null && !error && (
+                  <>
+                    <ArrowRight size={13} className="text-subtle" />
+                    <HealthChip hf={healthFor(after.col, after.debt)} />
+                  </>
+                )}
+              </div>
+            </div>
+            <KeyValue label="Collateral in Lending" value={amount !== null && !error && after.col !== col ? `${fmtUsd(col)} → ${fmtUsd(after.col)}` : fmtUsd(col)} />
+            <KeyValue label="Debt" value={amount !== null && !error && after.debt !== debt ? `${fmtUsd(debt)} → ${fmtUsd(after.debt)}` : fmtUsd(debt)} />
+            {action === "borrow" && <KeyValue label="Borrow APR" value="5.00% (simple)" />}
+          </div>
 
-      <Button className="w-full" size="lg" disabled={amount === null || !!error || busy} loading={busy} onClick={submit}>
-        {amount === null ? "Enter an amount" : needsApproval ? `Approve ${COLLATERAL_SYMBOL}` : isFullRepay ? "Repay full loan" : labels[action]}
-      </Button>
+          {action === "borrow" && (
+            <Callout>Borrowed {COLLATERAL_SYMBOL} comes from the lending pool seeded by the deploy script (test funds) — there are no real lenders in this prototype.</Callout>
+          )}
+          {needsApproval && (
+            <Callout tone="accent">
+              <b>Step 1 of 2:</b> approve the Lending module to take {fmtUsd(repayApproval)} {COLLATERAL_SYMBOL} from your wallet{isFullRepay && " (includes a small buffer for interest)"}. Then confirm the repayment.
+            </Callout>
+          )}
+
+          <Button className="w-full" size="lg" disabled={amount === null || !!error || busy} loading={busy} onClick={submit}>
+            {amount === null ? "Enter an amount" : needsApproval ? `Approve ${COLLATERAL_SYMBOL}` : isFullRepay ? "Repay full loan" : labels[action]}
+          </Button>
+        </>
+      )}
     </div>
   );
 }
