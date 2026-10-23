@@ -7,6 +7,7 @@ const CONTRACTS: { name: string; role: string; address: Address; abi: Abi }[] = 
   { name: "ModuleRegistry", role: "Allow-list of modules that may use the vault", ...contracts.registry },
   { name: "PerpsModule", role: "Perpetual futures rules", ...contracts.perps },
   { name: "LendingModule", role: "Borrowing and repayment rules", ...contracts.lending },
+  { name: "MarketMakerModule", role: "Indicative bid/ask quotes (stub)", ...contracts.marketMaker },
   { name: "MockOracle", role: "Test price feed (admin-controlled)", ...contracts.oracle },
   { name: "mUSDC", role: "Test collateral token (anyone can mint)", ...contracts.usdc },
 ].map((c) => ({ ...c, abi: c.abi as Abi }));

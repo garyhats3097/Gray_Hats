@@ -22,6 +22,10 @@ const MESSAGES: Record<string, string> = {
   ERC20InsufficientBalance: "Your wallet balance is too low.",
   ERC20InsufficientAllowance: "Token approval is missing or too low.",
   OwnableUnauthorizedAccount: "Only the admin account can do this.",
+  NotOperator: "Only authorised Market Maker operators can change this.",
+  SpreadOutOfRange: "The spread must be between 5 and 1,000 basis points (0.05%–10%).",
+  QuotingPaused: "Quoting is paused.",
+  MarketAlreadyListed: "That market is already listed.",
 };
 
 export function friendlyError(error: unknown): string {

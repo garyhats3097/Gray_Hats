@@ -66,6 +66,14 @@ else
     cast rpc evm_mine --rpc-url http://127.0.0.1:8545 >/dev/null
     echo ">>> Chain clock moved forward to $(date -d @$((MAX_TS + 1)) '+%d %b %Y %H:%M') (it had been time-travelled)."
   fi
+
+  # Chains saved before the Market Maker module existed: add it (nothing else is redeployed).
+  MM=$(grep -o '"MarketMakerModule": *"0x[0-9a-fA-F]*"' frontend/src/config/deployments.json | grep -o '0x[0-9a-fA-F]\{40\}' || true)
+  if [ -z "$MM" ] || [ "$(cast code "$MM" --rpc-url http://127.0.0.1:8545)" = "0x" ]; then
+    echo ">>> Adding the Market Maker module to this saved chain (your data is kept)…"
+    (cd contracts && forge script script/AddMarketMaker.s.sol --rpc-url http://127.0.0.1:8545 --broadcast >/dev/null) \
+      && echo ">>> Market Maker added." || echo "!!! Could not add the Market Maker module — run: cd contracts && forge script script/AddMarketMaker.s.sol --rpc-url http://127.0.0.1:8545 --broadcast"
+  fi
 fi
 echo ">>> Chain running on http://127.0.0.1:8545 — press Ctrl+C to stop (state is saved)."
 wait $ANVIL_PID

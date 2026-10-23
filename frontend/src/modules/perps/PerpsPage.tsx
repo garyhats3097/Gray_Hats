@@ -44,7 +44,7 @@ export default function PerpsPage() {
             <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[#627eea] text-sm font-bold text-white">Ξ</span>
             <div>
               <p className="font-semibold">ETH/USD</p>
-              <p className="text-xs text-subtle">Perpetual · mock oracle</p>
+              <p className="text-xs text-subtle">Perpetual · oracle price</p>
             </div>
           </div>
           <Stat label="Mark price" value={price === undefined ? "—" : fmtUsd(price)} />

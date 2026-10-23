@@ -3,6 +3,7 @@ import deployments from "./deployments.json";
 import {
   coreVaultAbi,
   lendingModuleAbi,
+  marketMakerModuleAbi,
   mockERC20Abi,
   mockOracleAbi,
   moduleRegistryAbi,
@@ -20,6 +21,7 @@ export const contracts = {
   vault: { address: deployments.CoreVault as Address, abi: coreVaultAbi },
   perps: { address: deployments.PerpsModule as Address, abi: perpsModuleAbi },
   lending: { address: deployments.LendingModule as Address, abi: lendingModuleAbi },
+  marketMaker: { address: deployments.MarketMakerModule as Address, abi: marketMakerModuleAbi },
 } as const;
 
 export const ADMIN_ADDRESS = deployments.admin as Address;
@@ -32,4 +34,5 @@ export const ETH_USD = keccak256(toHex("ETH/USD"));
 export const MODULE_NAMES: Record<string, string> = {
   [contracts.perps.address.toLowerCase()]: "Perpetuals",
   [contracts.lending.address.toLowerCase()]: "Lending",
+  [contracts.marketMaker.address.toLowerCase()]: "Market Maker",
 };

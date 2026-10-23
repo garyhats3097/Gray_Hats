@@ -18,7 +18,8 @@ Legend: 🔴 security / trust risk · 🟡 financial-model simplification · ⚪
 | Shared vault accounting (deposits, locks, settlement) | **Real** smart-contract logic, enforced on-chain and tested |
 | Perpetuals and Lending rules | **Real** on-chain logic, deliberately simplified (see §4–5) |
 | Collateral token (mUSDC) | **Simulated**: a mock token that anyone can mint for free |
-| ETH/USD price | **Simulated**: a mock oracle whose price the admin sets by hand |
+| ETH/USD price | A mock oracle set by the admin: by hand (Demo controls) or from the **real market** via `scripts/price-feed.sh` (Coinbase/Kraken/CoinGecko). Not a decentralised oracle: one key pushes the price |
+| Market Maker | **Stub**: indicative quotes only, no funded liquidity, no trades (see docs/MARKET_MAKER.md) |
 | Perps pool and lending pool liquidity | **Simulated**: 1,000,000 test mUSDC each, seeded by the deploy script. There are no real liquidity providers or lenders |
 | Blockchain | Local Anvil node only. `scripts/start-chain.sh` saves it to `.anvil/state.json` on this computer; plain `anvil` forgets everything on restart |
 | Activity history | **Real**: built from contract events. Failed attempts are stored only in the current browser |

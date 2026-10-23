@@ -8,11 +8,13 @@ import {ModuleRegistry} from "../src/core/ModuleRegistry.sol";
 import {CoreVault} from "../src/core/CoreVault.sol";
 import {PerpsModule} from "../src/modules/perps/PerpsModule.sol";
 import {LendingModule} from "../src/modules/lending/LendingModule.sol";
+import {MarketMakerModule} from "../src/modules/marketmaker/MarketMakerModule.sol";
+import {MarketMakerSetup} from "./MarketMakerSetup.sol";
 
 /// @notice Deploys the whole local prototype, seeds both pools, funds test accounts
 ///         and writes addresses to frontend/src/config/deployments.json.
 /// Usage (Anvil running):  forge script script/Deploy.s.sol --rpc-url http://127.0.0.1:8545 --broadcast
-contract Deploy is Script {
+contract Deploy is Script, MarketMakerSetup {
     // Anvil account #0 — a PUBLICLY KNOWN test key. Never use it on a real network.
     uint256 internal constant ANVIL_KEY_0 = 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80;
 
@@ -50,6 +52,9 @@ contract Deploy is Script {
         usdc.mint(0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC, TEST_ACCOUNT_FUNDS);
         usdc.mint(0x90F79bf6EB2c4f870365E785982E1f101E93b906, TEST_ACCOUNT_FUNDS);
 
+        // Market Maker (quote-only stub), deployed last so earlier addresses never change
+        MarketMakerModule mm = _deployMarketMaker(deployer, vault, oracle, registry);
+
         vm.stopBroadcast();
 
         string memory obj = "deployments";
@@ -61,12 +66,14 @@ contract Deploy is Script {
         vm.serializeAddress(obj, "ModuleRegistry", address(registry));
         vm.serializeAddress(obj, "CoreVault", address(vault));
         vm.serializeAddress(obj, "PerpsModule", address(perps));
-        string memory json = vm.serializeAddress(obj, "LendingModule", address(lending));
+        vm.serializeAddress(obj, "LendingModule", address(lending));
+        string memory json = vm.serializeAddress(obj, "MarketMakerModule", address(mm));
         vm.writeJson(json, "../frontend/src/config/deployments.json");
 
         console.log("CoreVault     ", address(vault));
         console.log("PerpsModule   ", address(perps));
         console.log("LendingModule ", address(lending));
+        console.log("MarketMaker   ", address(mm));
         console.log("Wrote frontend/src/config/deployments.json");
     }
 }

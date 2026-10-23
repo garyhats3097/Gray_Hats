@@ -99,7 +99,7 @@ export default function DemoPage() {
       </div>
 
       <div className="grid gap-5 lg:grid-cols-2">
-        <Card title="ETH/USD mock price" info="Changes the MockOracle price. Open positions' P&L and liquidation status update immediately.">
+        <Card title="ETH/USD mock price" info="Changes the MockOracle price. Open positions' P&L and liquidation status update immediately. If ./scripts/price-feed.sh is running, it replaces a manual price on its next update.">
           <p className="tabular text-3xl font-semibold tracking-tight">{price === undefined ? "—" : fmtUsd(price)}</p>
           <div className="mt-4 grid grid-cols-3 gap-2 sm:grid-cols-6">
             {STEPS.map((pct) => (

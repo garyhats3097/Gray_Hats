@@ -29,7 +29,13 @@ export function PriceChart({ positions }: { positions: PositionView[] }) {
 
   // Extend the last price to "now" (latest block time) so the chart reaches the present.
   const now = block ? Number(block.timestamp) : data[data.length - 1].time;
-  const points = [...data.map((d) => ({ time: d.time, price: d.price }))];
+  // Updates are in chain order. If a test chain's clock ever went backwards, clamp each time to
+  // be no earlier than the previous one, so the line never doubles back on itself.
+  const points: { time: number; price: number }[] = [];
+  for (const d of data) {
+    const prev = points[points.length - 1];
+    points.push({ time: prev && d.time < prev.time ? prev.time : d.time, price: d.price });
+  }
   if (now > points[points.length - 1].time) points.push({ time: now, price: points[points.length - 1].price });
   // A single update would be a dot; give it some width.
   if (points.length === 1) points.unshift({ time: points[0].time - 60, price: points[0].price });
@@ -61,7 +67,7 @@ export function PriceChart({ positions }: { positions: PositionView[] }) {
             minTickGap={60}
           />
           <YAxis
-            domain={[Math.min(...prices) - pad, Math.max(...prices) + pad]}
+            domain={[Math.max(0, Math.min(...prices) - pad), Math.max(...prices) + pad]}
             tickFormatter={(v: number) => `$${Math.round(v).toLocaleString()}`}
             tick={{ fontSize: 11, fill: "var(--color-subtle)" }}
             axisLine={false}

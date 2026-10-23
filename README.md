@@ -8,7 +8,7 @@ A local prototype: one shared collateral vault (`CoreVault`) with independent mo
 > ⚠️ Prototype only. Mock tokens, mock oracle, local Anvil chain. Not audited. Never deploy to mainnet.
 > See [docs/LIMITATIONS.md](docs/LIMITATIONS.md).
 
-**Docs:** [Accounting model](docs/ACCOUNTING.md) · [Demo script](docs/DEMO_SCRIPT.md) · [Limitations](docs/LIMITATIONS.md)
+**Docs:** [Accounting model](docs/ACCOUNTING.md) · [Market Maker](docs/MARKET_MAKER.md) · [Demo script](docs/DEMO_SCRIPT.md) · [Limitations](docs/LIMITATIONS.md)
 
 ## Repository layout
 ```
@@ -24,7 +24,7 @@ frontend/    React + TypeScript + Vite + wagmi/viem + Tailwind
   src/modules.ts   list of mounted modules (sidebar + routes)
   src/pages/       Portfolio, Vault, Activity, Explorer, Help, Demo controls
   src/config/      chain, contract addresses (auto-written) and ABIs (generated)
-scripts/     start-chain.sh / reset-chain.sh (saved local chain)
+scripts/     start-chain.sh / reset-chain.sh (saved local chain), price-feed.sh (real ETH price)
 docs/        ACCOUNTING.md, DEMO_SCRIPT.md, LIMITATIONS.md
 ```
 
@@ -72,6 +72,20 @@ reach the chain, or when the chain doesn't have the contracts.
 
 > Don't run `Deploy.s.sol` by hand on a saved chain — it creates new, empty contracts and the
 > app switches to them. `start-chain.sh` only deploys on a fresh chain.
+
+### Real ETH prices (optional third terminal)
+```bash
+./scripts/price-feed.sh        # pushes the real ETH/USD price into the oracle every 15 s
+./scripts/price-feed.sh 60     # …or every 60 s
+```
+Sources: Coinbase → Kraken → CoinGecko (public, no key; first that answers wins). Perpetuals,
+the price chart and the Market Maker then follow the real market. While it runs, it overwrites
+prices set by hand in Demo controls on its next update. Needs internet access.
+
+### Market Maker module
+A quote-only stub: indicative bid/ask around the oracle price with a configurable spread. See
+[docs/MARKET_MAKER.md](docs/MARKET_MAKER.md). Existing saved chains get it automatically the next
+time `./scripts/start-chain.sh` runs; nothing else is redeployed.
 
 ### Several users
 Every wallet address has its own position in the vault.
