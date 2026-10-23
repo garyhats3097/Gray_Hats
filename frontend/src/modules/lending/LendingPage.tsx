@@ -1,11 +1,11 @@
-import { HandCoins, History } from "lucide-react";
+import { AlertTriangle, HandCoins, History, Info } from "lucide-react";
 import { useAccountState } from "../../core/hooks/useAccountState";
 import { useActivity } from "../../core/hooks/useActivity";
 import { PageHeader } from "../../core/components/PageHeader";
 import { HealthGauge } from "../../core/components/HealthGauge";
 import { ActivityTable } from "../../core/components/ActivityTable";
 import { Callout, Card, EmptyState, KeyValue, Skeleton, StatCard } from "../../core/components/ui";
-import { AlertTriangle } from "lucide-react";
+import { Link } from "react-router-dom";
 import { fmtUsd, toNumber } from "../../core/lib/format";
 import { APR_PCT, liquidationDebt, useLendingMarket } from "./hooks";
 import { LendingPanel } from "./LendingPanel";
@@ -57,6 +57,26 @@ export default function LendingPage() {
             ) : (
               <><b>Your loan is close to liquidation.</b> Interest keeps increasing the debt. Repay some debt or allocate more collateral.</>
             )}
+          </Callout>
+        </div>
+      )}
+
+      {s.loaded && s.deposits === 0n && (
+        <div className="mb-5">
+          <Callout tone="accent" icon={<Info size={14} className="text-accent" />}>
+            You haven't deposited anything yet. Lending uses collateral from the shared vault: first{" "}
+            <Link to="/vault" className="font-medium text-accent underline-offset-2 hover:underline">
+              deposit mUSDC in the Shared Vault
+            </Link>
+            , then come back and <b>Allocate</b> it here.
+          </Callout>
+        </div>
+      )}
+      {s.loaded && s.free > 0n && s.lendingCollateral === 0n && (
+        <div className="mb-5">
+          <Callout tone="accent" icon={<Info size={14} className="text-accent" />}>
+            You have <b>{fmtUsd(s.free)}</b> available in the shared vault. A vault deposit is not Lending collateral yet: use{" "}
+            <b>Allocate</b> in "Manage loan" to move it into Lending, then you can borrow against it.
           </Callout>
         </div>
       )}

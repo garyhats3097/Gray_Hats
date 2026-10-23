@@ -116,11 +116,14 @@ export function LendingPanel() {
     repay: debt === 0n ? { message: "You don't have a loan to repay. Borrow first, then come back here to pay it back.", go: "borrow" } : null,
     withdraw: col === 0n ? { message: "No collateral is allocated to Lending, so there is nothing to release.", go: "supply" } : null,
   };
-  const block = s.isLoading ? null : blocked[action];
+  const block = s.loaded ? blocked[action] : null;
 
   return (
     <div className="space-y-5">
       <Tabs value={action} onChange={switchTo} options={(Object.keys(labels) as Action[]).map((k) => ({ value: k, label: labels[k] }))} />
+      <p className="tabular text-[13px] text-muted">
+        Available in the shared vault: <b className="text-ink">{fmtUsd(s.free)}</b>
+      </p>
 
       {block ? (
         <div className="space-y-4">

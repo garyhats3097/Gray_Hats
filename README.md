@@ -66,6 +66,10 @@ Stop the chain with **Ctrl+C** (it is saved on exit and every 5 seconds).
 To start over with an empty chain: `./scripts/reset-chain.sh`, then `./scripts/start-chain.sh`,
 and in MetaMask: Settings → Advanced → **Clear activity tab data**.
 
+`start-chain.sh` refuses to start if another chain (for example a plain `anvil`) already uses
+port 8545, because that chain would not be saved. The site also shows a red banner when it can't
+reach the chain, or when the chain doesn't have the contracts.
+
 > Don't run `Deploy.s.sol` by hand on a saved chain — it creates new, empty contracts and the
 > app switches to them. `start-chain.sh` only deploys on a fresh chain.
 

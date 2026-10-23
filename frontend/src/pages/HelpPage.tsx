@@ -46,6 +46,13 @@ export default function HelpPage() {
                 <b>Balances look empty:</b> plain <code className="rounded bg-sunken px-1">anvil</code> was started, which forgets everything. Stop it and run <code className="rounded bg-sunken px-1">./scripts/start-chain.sh</code> instead — it keeps your chain between restarts.
               </li>
               <li>
+                <b>Old positions or loans are missing:</b> the chain was started with plain <code className="rounded bg-sunken px-1">anvil</code>, which doesn't save. Always use{" "}
+                <code className="rounded bg-sunken px-1">./scripts/start-chain.sh</code>; it refuses to start if another chain is already running.
+              </li>
+              <li>
+                <b>Deposited, but Lending shows $0 collateral:</b> vault deposits only become Lending collateral after you <b>Allocate</b> them on the Lending page.
+              </li>
+              <li>
                 <b>"Wrong network":</b> use the Switch network button, or pick {anvilLocal.name} in MetaMask.
               </li>
             </ul>

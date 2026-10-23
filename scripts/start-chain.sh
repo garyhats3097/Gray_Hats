@@ -18,6 +18,15 @@ mkdir -p "$STATE_DIR"
 FRESH=1
 [ -f "$STATE_FILE" ] && FRESH=0
 
+# Refuse to start if another chain already uses port 8545 (e.g. a plain `anvil` in another
+# terminal). Otherwise this script would talk to THAT chain, which saves nothing.
+if cast block-number --rpc-url http://127.0.0.1:8545 >/dev/null 2>&1; then
+  echo "!!! Another chain is already running on port 8545 — probably a plain 'anvil' in another terminal."
+  echo "!!! It does NOT save anything. Stop it (Ctrl+C in its terminal, or run: pkill anvil),"
+  echo "!!! then run ./scripts/start-chain.sh again."
+  exit 1
+fi
+
 # --host 0.0.0.0 lets the Windows browser (and other computers) reach the chain.
 anvil --host 0.0.0.0 \
       --state "$STATE_FILE" --state-interval 5 \
@@ -25,8 +34,14 @@ anvil --host 0.0.0.0 \
 ANVIL_PID=$!
 trap 'kill -INT $ANVIL_PID 2>/dev/null; wait $ANVIL_PID 2>/dev/null' INT TERM EXIT
 
-# Wait until the chain answers.
-until cast block-number --rpc-url http://127.0.0.1:8545 >/dev/null 2>&1; do sleep 0.5; done
+# Wait until OUR chain answers (and stop if it failed to start).
+until cast block-number --rpc-url http://127.0.0.1:8545 >/dev/null 2>&1; do
+  if ! kill -0 "$ANVIL_PID" 2>/dev/null; then
+    echo "!!! Anvil failed to start — see the error above."
+    exit 1
+  fi
+  sleep 0.5
+done
 
 if [ "$FRESH" = 1 ]; then
   echo ">>> New chain — deploying contracts…"

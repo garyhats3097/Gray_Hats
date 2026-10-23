@@ -34,6 +34,8 @@ export function useAccountState() {
   return {
     address,
     isLoading: !!address && isLoading,
+    /** true only when the vault was actually read (false if the chain or contracts are unreachable) */
+    loaded: data?.[2]?.status === "success",
     isError,
     refetch,
     walletBalance: r<bigint>(0) ?? 0n,

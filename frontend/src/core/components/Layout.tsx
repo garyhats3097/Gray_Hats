@@ -4,7 +4,7 @@ import { useAccount } from "wagmi";
 import { Activity, Blocks, FlaskConical, HelpCircle, LayoutGrid, Menu, Vault, X, type LucideIcon } from "lucide-react";
 import { MODULES } from "../../modules";
 import { ConnectButton } from "./ConnectButton";
-import { NetworkBadge, WrongNetworkBanner } from "./NetworkBadge";
+import { ChainStatusBanner, NetworkBadge, WrongNetworkBanner } from "./NetworkBadge";
 import { Welcome } from "./Welcome";
 import { cx } from "./ui";
 
@@ -110,6 +110,7 @@ export function Layout({ children }: { children: ReactNode }) {
       </header>
 
       <main className="mx-auto max-w-6xl px-4 py-6 sm:px-8 sm:py-8">
+        <ChainStatusBanner />
         <WrongNetworkBanner />
         {needsWallet && !isConnected ? <Welcome /> : children}
       </main>

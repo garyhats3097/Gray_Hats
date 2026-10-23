@@ -27,7 +27,7 @@ export default function PortfolioPage() {
     { key: "lending", label: "Lending collateral", value: s.lockedLending, color: "var(--color-lending)" },
   ];
 
-  const isEmpty = !s.isLoading && s.deposits === 0n && s.debt === 0n;
+  const isEmpty = s.loaded && s.deposits === 0n && s.debt === 0n;
   const pnl = s.unrealizedPnl;
 
   return (

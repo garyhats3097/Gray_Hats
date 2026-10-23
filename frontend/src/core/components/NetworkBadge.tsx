@@ -1,6 +1,7 @@
-import { useAccount, useSwitchChain } from "wagmi";
+import { useAccount, useBytecode, useSwitchChain } from "wagmi";
 import { AlertTriangle } from "lucide-react";
 import { anvilLocal } from "../../config/chain";
+import { contracts } from "../../config/contracts";
 import { friendlyError } from "../lib/errors";
 import { useToast } from "./Toaster";
 import { Button } from "./ui";
@@ -47,4 +48,38 @@ export function WrongNetworkBanner() {
       </Button>
     </div>
   );
+}
+
+/**
+ * Warns when the site can't reach the chain, or reaches a chain without our contracts
+ * (e.g. a plain `anvil` that was never deployed to). Otherwise every page would just look empty.
+ */
+export function ChainStatusBanner() {
+  const { data: code, isError, isSuccess } = useBytecode({ address: contracts.vault.address, chainId: anvilLocal.id });
+  const rpc = anvilLocal.rpcUrls.default.http[0];
+
+  if (isError) {
+    return (
+      <div className="mb-6 flex items-start gap-2 rounded-xl border border-negative/30 bg-negative-soft px-4 py-3 text-sm text-ink">
+        <AlertTriangle size={16} className="mt-0.5 shrink-0 text-negative" />
+        <span>
+          <b>Can't reach the blockchain at {rpc}.</b> Start it in a WSL terminal with{" "}
+          <code className="rounded bg-surface px-1">./scripts/start-chain.sh</code>, then reload this page.
+        </span>
+      </div>
+    );
+  }
+  if (isSuccess && (!code || code === "0x")) {
+    return (
+      <div className="mb-6 flex items-start gap-2 rounded-xl border border-negative/30 bg-negative-soft px-4 py-3 text-sm text-ink">
+        <AlertTriangle size={16} className="mt-0.5 shrink-0 text-negative" />
+        <span>
+          <b>This chain doesn't have the Modular DeFi contracts</b>, so nothing will show or save. It was probably started with plain{" "}
+          <code className="rounded bg-surface px-1">anvil</code>. Stop it (Ctrl+C) and run{" "}
+          <code className="rounded bg-surface px-1">./scripts/start-chain.sh</code> instead.
+        </span>
+      </div>
+    );
+  }
+  return null;
 }
