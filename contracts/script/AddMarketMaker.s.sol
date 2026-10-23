@@ -34,6 +34,7 @@ contract AddMarketMaker is Script, MarketMakerSetup {
         vm.serializeAddress(obj, "MockOracle", address(oracle));
         vm.serializeAddress(obj, "ModuleRegistry", address(registry));
         vm.serializeAddress(obj, "CoreVault", address(vault));
+        vm.serializeAddress(obj, "CreditRegistry", vm.parseJsonAddress(file, ".CreditRegistry"));
         vm.serializeAddress(obj, "PerpsModule", vm.parseJsonAddress(file, ".PerpsModule"));
         vm.serializeAddress(obj, "LendingModule", vm.parseJsonAddress(file, ".LendingModule"));
         string memory json = vm.serializeAddress(obj, "MarketMakerModule", address(mm));

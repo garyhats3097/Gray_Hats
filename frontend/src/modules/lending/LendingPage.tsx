@@ -7,29 +7,39 @@ import { ActivityTable } from "../../core/components/ActivityTable";
 import { Callout, Card, EmptyState, KeyValue, Skeleton, StatCard } from "../../core/components/ui";
 import { Link } from "react-router-dom";
 import { fmtUsd, toNumber } from "../../core/lib/format";
-import { APR_PCT, liquidationDebt, useLendingMarket } from "./hooks";
+import { APR_PCT, useCredit, useLendingMarket } from "./hooks";
 import { LendingPanel } from "./LendingPanel";
+import { CreditProfile } from "./CreditProfile";
 
-/** Debt as a share of the 75% borrow limit and of the 85% liquidation line. */
-function UsageBar({ collateral, debt }: { collateral: bigint; debt: bigint }) {
+/** Debt as a share of collateral, against the tier's borrow limit and the loan's liquidation line. */
+function UsageBar({ collateral, debt, limitPct, liqPct }: { collateral: bigint; debt: bigint; limitPct: number; liqPct: number }) {
   const c = toNumber(collateral);
   const d = toNumber(debt);
-  const pct = (x: number) => (c > 0 ? Math.min((x / c) * 100, 100) : 0);
-  const usedTone = d > c * 0.85 ? "var(--color-negative)" : d > c * 0.75 * 0.9 ? "var(--color-warning-mark)" : "var(--color-lending)";
+  const usedPct = c > 0 ? (d / c) * 100 : 0;
+  // Scale so the liquidation line (which can be above 100%) always fits.
+  const scale = Math.max(100, liqPct * 1.08, usedPct * 1.05);
+  const at = (p: number) => `${Math.min((p / scale) * 100, 100)}%`;
+  const usedTone = usedPct > liqPct ? "var(--color-negative)" : usedPct > limitPct * 0.9 ? "var(--color-warning-mark)" : "var(--color-lending)";
   return (
     <div>
       <div className="relative h-3 w-full rounded-full bg-sunken">
-        <div className="h-full rounded-full transition-[width] duration-500" style={{ width: `${pct(d)}%`, background: usedTone, minWidth: d > 0 ? 4 : 0 }} />
-        <span className="absolute top-[-4px] h-5 w-[2px] bg-ink/60" style={{ left: "75%" }} title="Borrow limit (75%)" />
-        <span className="absolute top-[-4px] h-5 w-[2px] bg-negative" style={{ left: "85%" }} title="Liquidation threshold (85%)" />
+        <div className="h-full rounded-full transition-[width] duration-500" style={{ width: at(usedPct), background: usedTone, minWidth: d > 0 ? 4 : 0 }} />
+        {scale > 100 && <span className="absolute top-[-4px] h-5 w-[2px] bg-line-strong" style={{ left: at(100) }} title="100% = your collateral" />}
+        <span className="absolute top-[-4px] h-5 w-[2px] bg-ink/60" style={{ left: at(limitPct) }} title={`Borrow limit (${limitPct}%)`} />
+        <span className="absolute top-[-4px] h-5 w-[2px] bg-negative" style={{ left: at(liqPct) }} title={`Liquidation threshold (${liqPct}%)`} />
       </div>
       <div className="mt-2.5 flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-subtle">
         <span className="inline-flex items-center gap-1.5">
-          <span className="h-3 w-[2px] bg-ink/60" /> Borrow limit 75%
+          <span className="h-3 w-[2px] bg-ink/60" /> Borrow limit {limitPct}%
         </span>
         <span className="inline-flex items-center gap-1.5">
-          <span className="h-3 w-[2px] bg-negative" /> Liquidation 85%
+          <span className="h-3 w-[2px] bg-negative" /> Liquidation {liqPct}%
         </span>
+        {scale > 100 && (
+          <span className="inline-flex items-center gap-1.5">
+            <span className="h-3 w-[2px] bg-line-strong" /> 100% = collateral
+          </span>
+        )}
       </div>
       <p className="tabular mt-2 text-[13px] text-muted">
         Debt is <b className="text-ink">{c > 0 ? ((d / c) * 100).toFixed(1) : "0.0"}%</b> of your lending collateral.
@@ -41,13 +51,19 @@ function UsageBar({ collateral, debt }: { collateral: bigint; debt: bigint }) {
 export default function LendingPage() {
   const s = useAccountState();
   const { poolLiquidity } = useLendingMarket();
+  const credit = useCredit();
+  const limitPct = credit.terms ? Number(credit.terms.maxLtvBps) / 100 : 75;
+  const liqPct = credit.loanThresholdBps !== undefined ? Number(credit.loanThresholdBps) / 100 : 85;
   const activity = useActivity();
   const history = (activity.data ?? []).filter((i) => i.module === "Lending");
   const yearlyInterest = (toNumber(s.debt) * APR_PCT) / 100;
 
   return (
     <>
-      <PageHeader title="Lending" subtitle="Allocate collateral from the shared vault and borrow up to 75% of it." />
+      <PageHeader
+        title="Lending"
+        subtitle="Borrow against collateral from the shared vault: 75% by default, and up to 120% — more than your collateral — with a strong on-chain credit history."
+      />
 
       {s.healthFactor !== null && s.healthFactor < 1.25 && (
         <div className="mb-5">
@@ -94,17 +110,18 @@ export default function LendingPage() {
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4">
         <StatCard label="Collateral in Lending" value={fmtUsd(s.lendingCollateral)} loading={s.isLoading} info="Collateral locked in the shared vault for the Lending module. It cannot be used by Perpetuals at the same time." />
         <StatCard label="Outstanding debt" value={fmtUsd(s.debt)} sub={s.debt > 0n ? "Includes accrued interest" : undefined} loading={s.isLoading} />
-        <StatCard label="Borrow capacity left" value={fmtUsd(s.borrowCapacity)} loading={s.isLoading} info="75% of your lending collateral, minus what you already owe." />
+        <StatCard label="Borrow capacity left" value={fmtUsd(s.borrowCapacity)} loading={s.isLoading} info="Your credit tier's limit on your lending collateral (including any unsecured allowance), minus what you already owe." />
         <StatCard label="Pool liquidity" value={poolLiquidity === undefined ? "—" : fmtUsd(poolLiquidity)} sub="Test funds from deploy" info="mUSDC available to borrow. Seeded by the deploy script; repayments and interest flow back into it." />
       </div>
 
       <div className="mt-5 grid gap-5 lg:grid-cols-3">
         <div className="min-w-0 space-y-5 lg:col-span-2">
+          <CreditProfile />
           <div className="grid gap-5 md:grid-cols-2">
-            <Card title="Health factor" info="Lending collateral × 85% ÷ debt. Below 1.0 anyone can liquidate the loan.">
+            <Card title="Health factor" info="Lending collateral × your loan's liquidation threshold ÷ debt. Below 1.0 anyone can liquidate the loan.">
               {s.isLoading ? <Skeleton className="h-36 w-full" /> : <HealthGauge hf={s.healthFactor} />}
               <div className="mt-4 divide-y divide-line">
-                <KeyValue label="Liquidation when debt reaches" value={s.lendingCollateral > 0n ? fmtUsd(liquidationDebt(s.lendingCollateral)) : "—"} />
+                <KeyValue label="Liquidation when debt reaches" value={s.lendingCollateral > 0n ? fmtUsd((toNumber(s.lendingCollateral) * liqPct) / 100) : "—"} />
                 <KeyValue label="Interest per year at 5% APR" value={fmtUsd(yearlyInterest)} />
               </div>
             </Card>
@@ -112,11 +129,11 @@ export default function LendingPage() {
               {s.lendingCollateral === 0n ? (
                 <EmptyState icon={<HandCoins size={18} />} title="No collateral allocated" body="Allocate collateral from the vault to start borrowing." />
               ) : (
-                <UsageBar collateral={s.lendingCollateral} debt={s.debt} />
+                <UsageBar collateral={s.lendingCollateral} debt={s.debt} limitPct={limitPct} liqPct={liqPct} />
               )}
               <div className="mt-4 divide-y divide-line border-t border-line pt-1">
-                <KeyValue label="Max loan-to-value" value="75%" />
-                <KeyValue label="Liquidation threshold" value="85%" />
+                <KeyValue label="Max loan-to-value (your tier)" value={`${limitPct}%`} />
+                <KeyValue label="Liquidation threshold" value={`${liqPct}%`} info="Fixed per loan: the tier you borrowed under. A later score change doesn't change it." />
                 <KeyValue label="Liquidation penalty" value="5% of debt" info="On liquidation, debt + 5% is taken from your lending collateral into the pool. The rest is released back to you." />
               </div>
             </Card>

@@ -94,13 +94,19 @@ These are the most important limitations. In this prototype the admin and the mo
 | Asset pair | Borrow mUSDC against mUSDC. Because both are worth $1, **price moves never affect a loan**. Only interest changes the health factor, which is why the demo needs time-travel |
 | Liquidity | A pool seeded by the deploy script. Nobody can supply liquidity or earn interest |
 | Interest | Fixed 5% APR, not linked to how much of the pool is borrowed. Interest is added to the debt each time the loan is touched, so it compounds slightly with frequent interaction |
-| Limits | 75% max loan-to-value, liquidation at 85%, 5% penalty, all fixed constants |
+| Limits | Credit-based: 75% by default, up to 120% (undercollateralized) for the Prime tier, with an unsecured cap of 25% of past repayments and a pool-wide cap of 10%. Liquidation thresholds 85–125% by tier, fixed per loan. See docs/CREDIT.md |
 | Liquidation | Whole loan at once (no partial liquidation), with no liquidator reward |
-| Bad debt | If debt exceeds collateral, the shortfall is recorded in an event and absorbed by the pool |
+| Bad debt | Shortfalls from liquidated undercollateralized loans are recorded in `totalBadDebt` and absorbed by the pool; the borrower is marked defaulted |
 | Repayment | From the wallet only. Repaying directly from vault collateral is not supported |
 | Borrowed funds | Sent to the wallet. Re-depositing them as collateral is allowed, so a user can loop leverage |
 
 ---
+
+## 5b. Credit scoring 🟡🔴
+- Scores use only on-chain history inside this protocol — no identity, so a defaulted user can
+  start over with a new address.
+- Undercollateralized loans can lose the pool money by design; the caps limit how much.
+- Weights and tiers are fixed and uncalibrated (see docs/CREDIT.md).
 
 ## 6. Accounting notes 🟡
 

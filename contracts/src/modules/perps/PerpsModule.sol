@@ -6,6 +6,7 @@ import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol
 import {ICoreVault} from "../../interfaces/ICoreVault.sol";
 import {IModule} from "../../interfaces/IModule.sol";
 import {IPriceOracle} from "../../interfaces/IPriceOracle.sol";
+import {ICreditRegistry} from "../../interfaces/ICreditRegistry.sol";
 
 /// @title PerpsModule — simplified perpetual futures (PROTOTYPE)
 /// @notice Rules (see docs/PERPS.md):
@@ -40,6 +41,8 @@ contract PerpsModule is IModule, Ownable, ReentrancyGuard {
 
     ICoreVault public immutable vault;
     IPriceOracle public immutable oracle;
+    /// @notice Shared credit history: opening a position counts as activity, a liquidation is a penalty.
+    ICreditRegistry public immutable credit;
 
     mapping(bytes32 => bool) public isMarketListed;
     bytes32[] public markets;
@@ -77,9 +80,10 @@ contract PerpsModule is IModule, Ownable, ReentrancyGuard {
     error NotLiquidatable();
     error MarketAlreadyListed();
 
-    constructor(address owner_, ICoreVault vault_, IPriceOracle oracle_) Ownable(owner_) {
+    constructor(address owner_, ICoreVault vault_, IPriceOracle oracle_, ICreditRegistry credit_) Ownable(owner_) {
         vault = vault_;
         oracle = oracle_;
+        credit = credit_;
     }
 
     function moduleName() external pure returns (string memory) {
@@ -127,6 +131,7 @@ contract PerpsModule is IModule, Ownable, ReentrancyGuard {
             openedAt: block.timestamp
         });
         _userPositionIds[msg.sender].push(positionId);
+        credit.recordActivity(msg.sender);
 
         emit PositionOpened(positionId, msg.sender, marketId, isLong, size, margin, leverage, price, fee);
     }
@@ -175,6 +180,7 @@ contract PerpsModule is IModule, Ownable, ReentrancyGuard {
 
         p.isOpen = false;
         vault.realizeLoss(p.owner, p.margin);
+        credit.recordLiquidation(p.owner, false);
         emit PositionLiquidated(positionId, p.owner, msg.sender, price, p.margin);
     }
 

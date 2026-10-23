@@ -5,37 +5,54 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import {ICoreVault} from "../../interfaces/ICoreVault.sol";
+import {ICreditRegistry} from "../../interfaces/ICreditRegistry.sol";
 import {IModule} from "../../interfaces/IModule.sol";
 
-/// @title LendingModule — simplified over-collateralised borrowing (PROTOTYPE)
-/// @notice Rules (see docs/LENDING.md):
+/// @title LendingModule — credit-based borrowing, including UNDERCOLLATERALIZED loans (PROTOTYPE)
+/// @notice Rules (see docs/CREDIT.md):
 ///  - Users allocate vault collateral to Lending (it is locked in the CoreVault).
-///  - Borrow mUSDC up to 75% of that collateral (LTV). Collateral and debt are both
-///    mUSDC ($1), so no oracle is needed.
-///  - Borrowed tokens come from the lending pool: the module's reserve in the vault,
-///    seeded by the deploy script. There is no external liquidity.
+///  - The borrow limit depends on the user's credit tier from the shared CreditRegistry:
+///    Standard 75%, Trusted 90%, Established 100%, Prime 120% of collateral.
+///  - The part above the collateral (unsecured) is capped by:
+///      (a) 25% of everything the user has repaid before (from the registry), and
+///      (b) a pool-wide cap: all unsecured debt together ≤ 10% of the pool's liquidity.
+///  - Each loan keeps the liquidation threshold of the tier it was taken under, so a later
+///    score change never makes an existing loan liquidatable by itself.
 ///  - Debt grows with simple 5% APR interest, accrued on every interaction.
-///  - Health factor = collateral * 85% / debt. Below 1.0 anyone may liquidate: debt + 5%
-///    penalty is taken from the locked collateral into the pool, the rest is unlocked.
+///  - Health factor = collateral × threshold / debt. Below 1.0 anyone may liquidate: debt + 5%
+///    is taken from the collateral; any shortfall is bad debt absorbed by the pool, and the
+///    user is marked as defaulted in the registry (no more unsecured borrowing).
+///  - Borrowed tokens come from the lending pool (the module's reserve in the vault), seeded by
+///    the deploy script. There are no real lenders.
 contract LendingModule is IModule, ReentrancyGuard {
     using SafeERC20 for IERC20;
 
     uint256 public constant BPS = 10_000;
-    uint256 public constant LTV_BPS = 7_500; // max borrow = 75% of collateral
-    uint256 public constant LIQUIDATION_THRESHOLD_BPS = 8_500; // liquidatable above 85%
+    /// @notice Standard-tier terms (users without credit history).
+    uint256 public constant LTV_BPS = 7_500;
+    uint256 public constant LIQUIDATION_THRESHOLD_BPS = 8_500;
     uint256 public constant LIQUIDATION_PENALTY_BPS = 500; // 5%
     uint256 public constant APR_BPS = 500; // 5% simple interest per year
     uint256 public constant YEAR = 365 days;
+    /// @notice All unsecured debt together may use at most 10% of the pool's liquidity.
+    uint256 public constant POOL_UNSECURED_CAP_BPS = 1_000;
 
     struct Loan {
         uint256 debt; // principal + accrued interest at lastAccrued
         uint256 lastAccrued;
+        uint256 liquidationThresholdBps; // tier threshold at the latest borrow
+        uint256 unsecured; // debt above collateral, as of the last update
     }
 
     ICoreVault public immutable vault;
     IERC20 public immutable token;
+    ICreditRegistry public immutable credit;
 
     mapping(address => Loan) private _loans;
+    /// @notice Sum of every loan's unsecured part (as of each loan's last update).
+    uint256 public totalUnsecured;
+    /// @notice Shortfalls from liquidated undercollateralized loans, absorbed by the pool.
+    uint256 public totalBadDebt;
 
     event CollateralAdded(address indexed user, uint256 amount);
     event CollateralRemoved(address indexed user, uint256 amount);
@@ -52,9 +69,10 @@ contract LendingModule is IModule, ReentrancyGuard {
     error NoDebt();
     error NotLiquidatable();
 
-    constructor(ICoreVault vault_) {
+    constructor(ICoreVault vault_, ICreditRegistry credit_) {
         vault = vault_;
         token = IERC20(vault_.collateralToken());
+        credit = credit_;
     }
 
     function moduleName() external pure returns (string memory) {
@@ -66,6 +84,8 @@ contract LendingModule is IModule, ReentrancyGuard {
     function addCollateral(uint256 amount) external nonReentrant {
         if (amount == 0) revert ZeroAmount();
         vault.lock(msg.sender, amount); // vault enforces free collateral
+        credit.recordActivity(msg.sender);
+        _syncUnsecured(msg.sender);
         emit CollateralAdded(msg.sender, amount);
     }
 
@@ -74,8 +94,10 @@ contract LendingModule is IModule, ReentrancyGuard {
         _accrue(msg.sender);
         uint256 collateral = collateralOf(msg.sender);
         if (amount > collateral) revert WouldBreakCollateralRequirement();
-        if ((collateral - amount) * LTV_BPS / BPS < _loans[msg.sender].debt) revert WouldBreakCollateralRequirement();
+        uint256 debt = _loans[msg.sender].debt;
+        if (debt > 0 && _limitFor(msg.sender, collateral - amount) < debt) revert WouldBreakCollateralRequirement();
         vault.unlock(msg.sender, amount);
+        _syncUnsecured(msg.sender);
         emit CollateralRemoved(msg.sender, amount);
     }
 
@@ -84,11 +106,16 @@ contract LendingModule is IModule, ReentrancyGuard {
     function borrow(uint256 amount) external nonReentrant {
         if (amount == 0) revert ZeroAmount();
         _accrue(msg.sender);
-        uint256 available = _borrowCapacity(msg.sender);
+        Loan storage loan = _loans[msg.sender];
+        uint256 limit = _limitFor(msg.sender, collateralOf(msg.sender));
+        uint256 available = limit > loan.debt ? limit - loan.debt : 0;
         if (amount > available) revert ExceedsBorrowLimit(amount, available);
 
-        Loan storage loan = _loans[msg.sender];
         loan.debt += amount;
+        // The loan takes the liquidation threshold of the tier it is borrowed under.
+        loan.liquidationThresholdBps = credit.termsOf(msg.sender).liquidationThresholdBps;
+        credit.recordActivity(msg.sender);
+        _syncUnsecured(msg.sender);
         vault.payFromReserve(msg.sender, amount); // reverts if the pool lacks liquidity
         emit Borrowed(msg.sender, amount, loan.debt);
     }
@@ -103,8 +130,12 @@ contract LendingModule is IModule, ReentrancyGuard {
         if (amount > loan.debt) amount = loan.debt;
 
         loan.debt -= amount;
+        bool closed = loan.debt == 0;
+        if (closed) loan.liquidationThresholdBps = 0;
+        _syncUnsecured(user);
         token.safeTransferFrom(msg.sender, address(vault), amount);
         vault.creditReserve(amount);
+        credit.recordRepayment(user, amount, closed);
         emit Repaid(user, msg.sender, amount, loan.debt);
     }
 
@@ -125,8 +156,12 @@ contract LendingModule is IModule, ReentrancyGuard {
         }
 
         loan.debt = 0;
-        vault.realizeLoss(user, seize);
+        loan.liquidationThresholdBps = 0;
+        totalBadDebt += badDebt;
+        if (seize > 0) vault.realizeLoss(user, seize);
         if (collateral > seize) vault.unlock(user, collateral - seize);
+        _syncUnsecured(user);
+        credit.recordLiquidation(user, true);
         emit Liquidated(user, msg.sender, debt, seize, badDebt);
     }
 
@@ -142,17 +177,52 @@ contract LendingModule is IModule, ReentrancyGuard {
         return loan.debt + _pendingInterest(loan);
     }
 
-    function borrowCapacity(address user) external view returns (uint256) {
-        uint256 limit = collateralOf(user) * LTV_BPS / BPS;
+    /// @notice Total amount the user may owe right now (collateral × tier LTV, with unsecured caps).
+    function borrowLimit(address user) public view returns (uint256) {
+        return _limitFor(user, collateralOf(user));
+    }
+
+    function borrowCapacity(address user) public view returns (uint256) {
+        uint256 limit = borrowLimit(user);
         uint256 debt = debtOf(user);
         return limit > debt ? limit - debt : 0;
+    }
+
+    /// @notice Liquidation threshold that applies to the user's loan (or would apply to a new one).
+    function liquidationThresholdOf(address user) public view returns (uint256) {
+        uint256 snap = _loans[user].liquidationThresholdBps;
+        if (_loans[user].debt > 0 && snap != 0) return snap;
+        return credit.termsOf(user).liquidationThresholdBps;
     }
 
     /// @notice 18-decimal health factor; type(uint256).max when there is no debt.
     function healthFactor(address user) public view returns (uint256) {
         uint256 debt = debtOf(user);
         if (debt == 0) return type(uint256).max;
-        return collateralOf(user) * LIQUIDATION_THRESHOLD_BPS * 1e18 / (BPS * debt);
+        return collateralOf(user) * liquidationThresholdOf(user) * 1e18 / (BPS * debt);
+    }
+
+    /// @notice Collateral that can be released without breaking the borrow limit.
+    function maxRemovable(address user) external view returns (uint256) {
+        uint256 collateral = collateralOf(user);
+        uint256 debt = debtOf(user);
+        if (debt == 0) return collateral;
+        // binary search over the (monotonic) limit function
+        uint256 lo;
+        uint256 hi = collateral;
+        while (lo < hi) {
+            uint256 mid = (lo + hi + 1) / 2;
+            if (_limitFor(user, collateral - mid) >= debt) lo = mid;
+            else hi = mid - 1;
+        }
+        return lo;
+    }
+
+    /// @notice Room left under the pool-wide unsecured cap for this user.
+    function poolUnsecuredRoom(address user) public view returns (uint256) {
+        uint256 cap = vault.moduleReserve(address(this)) * POOL_UNSECURED_CAP_BPS / BPS;
+        uint256 others = totalUnsecured - _loans[user].unsecured;
+        return cap > others ? cap - others : 0;
     }
 
     /// @notice Lending pool liquidity available to borrowers.
@@ -167,17 +237,31 @@ contract LendingModule is IModule, ReentrancyGuard {
     {
         collateral = collateralOf(user);
         debt = debtOf(user);
-        uint256 limit = collateral * LTV_BPS / BPS;
-        capacity = limit > debt ? limit - debt : 0;
+        capacity = borrowCapacity(user);
         health = healthFactor(user);
     }
 
     // ============================================================ internals
 
-    function _borrowCapacity(address user) private view returns (uint256) {
-        uint256 limit = collateralOf(user) * LTV_BPS / BPS;
-        uint256 debt = _loans[user].debt; // already accrued by caller
-        return limit > debt ? limit - debt : 0;
+    /// @dev Borrow limit for a given collateral amount under the user's current credit terms.
+    function _limitFor(address user, uint256 collateral) private view returns (uint256) {
+        ICreditRegistry.Terms memory t = credit.termsOf(user);
+        uint256 byLtv = collateral * t.maxLtvBps / BPS;
+        if (byLtv <= collateral) return byLtv; // fully collateralized tiers
+        uint256 unsecured = byLtv - collateral;
+        if (unsecured > t.unsecuredAllowance) unsecured = t.unsecuredAllowance;
+        uint256 room = poolUnsecuredRoom(user);
+        if (unsecured > room) unsecured = room;
+        return collateral + unsecured;
+    }
+
+    /// @dev Keep totalUnsecured in step with this loan's debt above its collateral.
+    function _syncUnsecured(address user) private {
+        Loan storage loan = _loans[user];
+        uint256 collateral = collateralOf(user);
+        uint256 unsecured = loan.debt > collateral ? loan.debt - collateral : 0;
+        totalUnsecured = totalUnsecured - loan.unsecured + unsecured;
+        loan.unsecured = unsecured;
     }
 
     function _accrue(address user) private {

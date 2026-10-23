@@ -8,12 +8,12 @@ A local prototype: one shared collateral vault (`CoreVault`) with independent mo
 > ⚠️ Prototype only. Mock tokens, mock oracle, local Anvil chain. Not audited. Never deploy to mainnet.
 > See [docs/LIMITATIONS.md](docs/LIMITATIONS.md).
 
-**Docs:** [Accounting model](docs/ACCOUNTING.md) · [Market Maker](docs/MARKET_MAKER.md) · [Demo script](docs/DEMO_SCRIPT.md) · [Limitations](docs/LIMITATIONS.md)
+**Docs:** [Accounting model](docs/ACCOUNTING.md) · [Credit & undercollateralized lending](docs/CREDIT.md) · [Market Maker](docs/MARKET_MAKER.md) · [Demo script](docs/DEMO_SCRIPT.md) · [Limitations](docs/LIMITATIONS.md)
 
 ## Repository layout
 ```
 contracts/   Foundry project (Solidity)
-  src/core/        CoreVault, ModuleRegistry      ← never edited to add a module
+  src/core/        CoreVault, ModuleRegistry, CreditRegistry   ← never edited to add a module
   src/interfaces/  ICoreVault, IModule, ...
   src/modules/     one folder per module
   src/mocks/       MockERC20, MockOracle (test-only)
@@ -82,6 +82,11 @@ reach the chain, or when the chain doesn't have the contracts.
 - the oracle rejects prices older than 15 minutes, so trading stops if the feed stops.
 
 There are no controls in the site to change the price or the chain's clock.
+
+### Credit-based lending
+Lending limits depend on an on-chain credit score (repayments, amount repaid, account age,
+deposit size, perps liquidations). The best tier (Prime) can borrow up to 120% of its
+collateral — an undercollateralized loan — within strict caps. See [docs/CREDIT.md](docs/CREDIT.md).
 
 ### Market Maker module
 A quote-only stub: indicative bid/ask around the oracle price with a configurable spread. See

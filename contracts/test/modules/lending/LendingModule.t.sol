@@ -10,7 +10,7 @@ contract LendingModuleTest is BaseTest {
 
     function setUp() public override {
         super.setUp();
-        lending = new LendingModule(vault);
+        lending = new LendingModule(vault, credit);
         _register(address(lending));
         _fundReserve(address(lending), 100_000e18);
         _deposit(alice, 1_000e18);
@@ -73,7 +73,7 @@ contract LendingModuleTest is BaseTest {
     }
 
     function test_RevertWhen_PoolHasNoLiquidity() public {
-        LendingModule dry = new LendingModule(vault);
+        LendingModule dry = new LendingModule(vault, credit);
         _register(address(dry));
         vm.startPrank(alice);
         dry.addCollateral(400e18);

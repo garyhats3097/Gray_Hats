@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ArrowRight, Info } from "lucide-react";
+import { AlertTriangle, ArrowRight, Info } from "lucide-react";
 import { Link } from "react-router-dom";
 import { maxUint256 } from "viem";
 import { contracts, COLLATERAL_SYMBOL } from "../../config/contracts";
@@ -9,7 +9,7 @@ import { AmountInput } from "../../core/components/AmountInput";
 import { fmtHealth, healthStatus } from "../../core/components/HealthGauge";
 import { Badge, Button, Callout, KeyValue, Tabs } from "../../core/components/ui";
 import { fmtUsd, parseAmount } from "../../core/lib/format";
-import { healthFor, requiredCollateral, useLendingMarket } from "./hooks";
+import { TIERS, healthFor, useCredit, useLendingMarket } from "./hooks";
 
 type Action = "supply" | "borrow" | "repay" | "withdraw";
 
@@ -26,6 +26,7 @@ function HealthChip({ hf }: { hf: number | null }) {
 export function LendingPanel() {
   const s = useAccountState();
   const { poolLiquidity, repayAllowance } = useLendingMarket();
+  const c = useCredit();
   const { send, busy } = useTx();
   const [action, setAction] = useState<Action>("supply");
   const [input, setInput] = useState("");
@@ -35,7 +36,7 @@ export function LendingPanel() {
   const debt = s.debt;
 
   // Maximums per action
-  const removable = col > requiredCollateral(debt) ? col - requiredCollateral(debt) : 0n;
+  const removable = c.maxRemovable ?? 0n; // computed by the contract under your credit terms
   const borrowMax = poolLiquidity !== undefined && poolLiquidity < s.borrowCapacity ? poolLiquidity : s.borrowCapacity;
   const repayMax = debt < s.walletBalance ? debt : s.walletBalance;
   const max = { supply: s.free, borrow: borrowMax, repay: repayMax, withdraw: removable }[action];
@@ -49,12 +50,19 @@ export function LendingPanel() {
     withdraw: { col: col > a ? col - a : 0n, debt },
   }[action];
 
+  // A new borrow takes the current tier's liquidation threshold; other actions keep the loan's own.
+  const previewThreshold = (action === "borrow" ? c.terms?.liquidationThresholdBps : c.loanThresholdBps) ?? 8_500n;
+  const unsecuredAfter = action === "borrow" && after.debt > after.col ? after.debt - after.col : 0n;
+
   let error: string | null = null;
   if (input && amount === null) error = "Enter a valid amount";
   else if (amount !== null && amount > max) {
     error = {
       supply: "Exceeds your available collateral in the vault",
-      borrow: poolLiquidity !== undefined && amount > poolLiquidity ? "Not enough liquidity in the pool" : "Exceeds your borrowing capacity (75% of collateral)",
+      borrow:
+        poolLiquidity !== undefined && amount > poolLiquidity
+          ? "Not enough liquidity in the pool"
+          : `Exceeds your borrowing capacity (${TIERS[c.terms?.tier ?? 0].name} tier)`,
       repay: amount > debt ? `More than you owe (${fmtUsd(debt)})` : "Exceeds your wallet balance",
       withdraw: "That collateral is backing your loan. Repay first.",
     }[action];
@@ -112,7 +120,7 @@ export function LendingPanel() {
   // When an action can't be used yet, say why and point to the step that comes first.
   const blocked: Record<Action, { message: string; go?: Action; vault?: boolean } | null> = {
     supply: s.free === 0n ? { message: "You have no available collateral in the vault. Deposit mUSDC first.", vault: true } : null,
-    borrow: col === 0n ? { message: "Allocate collateral to Lending first. You can then borrow up to 75% of it.", go: "supply" } : null,
+    borrow: col === 0n ? { message: `Allocate collateral to Lending first. Your ${TIERS[c.terms?.tier ?? 0].name} tier lets you borrow up to ${TIERS[c.terms?.tier ?? 0].ltvPct}% of it.`, go: "supply" } : null,
     repay: debt === 0n ? { message: "You don't have a loan to repay. Borrow first, then come back here to pay it back.", go: "borrow" } : null,
     withdraw: col === 0n ? { message: "No collateral is allocated to Lending, so there is nothing to release.", go: "supply" } : null,
   };
@@ -153,7 +161,7 @@ export function LendingPanel() {
                 {amount !== null && !error && (
                   <>
                     <ArrowRight size={13} className="text-subtle" />
-                    <HealthChip hf={healthFor(after.col, after.debt)} />
+                    <HealthChip hf={healthFor(after.col, after.debt, previewThreshold)} />
                   </>
                 )}
               </div>
@@ -163,6 +171,13 @@ export function LendingPanel() {
             {action === "borrow" && <KeyValue label="Borrow APR" value="5.00% (simple)" />}
           </div>
 
+          {action === "borrow" && unsecuredAfter > 0n && amount !== null && !error && (
+            <Callout tone="warning" icon={<AlertTriangle size={14} className="text-warning" />}>
+              <b>Undercollateralized loan:</b> your debt would be {fmtUsd(unsecuredAfter)} more than your collateral. This is allowed by your{" "}
+              {TIERS[c.terms?.tier ?? 0].name} credit tier. If the loan is liquidated you lose all of this collateral and your credit is marked as
+              defaulted for good.
+            </Callout>
+          )}
           {action === "borrow" && (
             <Callout>Borrowed {COLLATERAL_SYMBOL} comes from the lending pool seeded by the deploy script (test funds) — there are no real lenders in this prototype.</Callout>
           )}

@@ -13,8 +13,8 @@ contract SharedCoreTest is BaseTest {
 
     function setUp() public override {
         super.setUp();
-        perps = new PerpsModule(admin, vault, oracle);
-        lending = new LendingModule(vault);
+        perps = new PerpsModule(admin, vault, oracle, credit);
+        lending = new LendingModule(vault, credit);
         _register(address(perps));
         _register(address(lending));
         vm.prank(admin);

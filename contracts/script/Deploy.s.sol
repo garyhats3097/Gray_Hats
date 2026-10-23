@@ -6,6 +6,7 @@ import {MockERC20} from "../src/mocks/MockERC20.sol";
 import {MockOracle} from "../src/mocks/MockOracle.sol";
 import {ModuleRegistry} from "../src/core/ModuleRegistry.sol";
 import {CoreVault} from "../src/core/CoreVault.sol";
+import {CreditRegistry} from "../src/core/CreditRegistry.sol";
 import {PerpsModule} from "../src/modules/perps/PerpsModule.sol";
 import {LendingModule} from "../src/modules/lending/LendingModule.sol";
 import {MarketMakerModule} from "../src/modules/marketmaker/MarketMakerModule.sol";
@@ -35,8 +36,9 @@ contract Deploy is Script, MarketMakerSetup {
         MockOracle oracle = new MockOracle(deployer, maxAge);
         ModuleRegistry registry = new ModuleRegistry(deployer);
         CoreVault vault = new CoreVault(usdc, registry);
-        PerpsModule perps = new PerpsModule(deployer, vault, oracle);
-        LendingModule lending = new LendingModule(vault);
+        CreditRegistry credit = new CreditRegistry(registry, vault);
+        PerpsModule perps = new PerpsModule(deployer, vault, oracle, credit);
+        LendingModule lending = new LendingModule(vault, credit);
 
         registry.registerModule(address(perps));
         registry.registerModule(address(lending));
@@ -68,6 +70,7 @@ contract Deploy is Script, MarketMakerSetup {
         vm.serializeAddress(obj, "MockOracle", address(oracle));
         vm.serializeAddress(obj, "ModuleRegistry", address(registry));
         vm.serializeAddress(obj, "CoreVault", address(vault));
+        vm.serializeAddress(obj, "CreditRegistry", address(credit));
         vm.serializeAddress(obj, "PerpsModule", address(perps));
         vm.serializeAddress(obj, "LendingModule", address(lending));
         string memory json = vm.serializeAddress(obj, "MarketMakerModule", address(mm));

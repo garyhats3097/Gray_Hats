@@ -2,6 +2,7 @@ import { keccak256, toHex, type Address } from "viem";
 import deployments from "./deployments.json";
 import {
   coreVaultAbi,
+  creditRegistryAbi,
   lendingModuleAbi,
   marketMakerModuleAbi,
   mockERC20Abi,
@@ -19,6 +20,7 @@ export const contracts = {
   oracle: { address: deployments.MockOracle as Address, abi: mockOracleAbi },
   registry: { address: deployments.ModuleRegistry as Address, abi: moduleRegistryAbi },
   vault: { address: deployments.CoreVault as Address, abi: coreVaultAbi },
+  credit: { address: deployments.CreditRegistry as Address, abi: creditRegistryAbi },
   perps: { address: deployments.PerpsModule as Address, abi: perpsModuleAbi },
   lending: { address: deployments.LendingModule as Address, abi: lendingModuleAbi },
   marketMaker: { address: deployments.MarketMakerModule as Address, abi: marketMakerModuleAbi },

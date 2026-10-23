@@ -11,7 +11,7 @@ contract PerpsModuleTest is BaseTest {
 
     function setUp() public override {
         super.setUp();
-        perps = new PerpsModule(admin, vault, oracle);
+        perps = new PerpsModule(admin, vault, oracle, credit);
         _register(address(perps));
         vm.prank(admin);
         perps.listMarket(ETH_USD, "ETH/USD");
@@ -136,7 +136,7 @@ contract PerpsModuleTest is BaseTest {
 
     function test_ProfitCappedWhenPoolEmpty() public {
         // fresh setup with an almost empty pool
-        PerpsModule thin = new PerpsModule(admin, vault, oracle);
+        PerpsModule thin = new PerpsModule(admin, vault, oracle, credit);
         _register(address(thin));
         vm.prank(admin);
         thin.listMarket(ETH_USD, "ETH/USD");

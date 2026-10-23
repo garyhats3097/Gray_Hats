@@ -87,6 +87,15 @@ In MetaMask:
 
 ---
 
+## Act 5b — Credit: earning an undercollateralized loan (optional, 3 min)
+
+1. **Lending** → the **Credit profile** shows the score and what builds it.
+2. With $2,000 allocated, **Borrow 1,000** then **Repay → MAX → Repay full loan** — three times.
+   The score climbs 30 → 50 (Trusted) → 70 (Established) → **90 (Prime)** (with ≥ $15,000 deposited).
+3. **Borrow → MAX**: **$2,400** on $2,000 collateral, and the **Undercollateralized loan** warning.
+   > "Good on-chain behaviour earns credit: this user may borrow more than their collateral — but
+   > only up to 25% of what they've already repaid, and a default zeroes their score forever."
+
 ## Act 6 — Close, repay, and show the chain (2 min)
 
 1. **Perpetuals** → **Close**. The dialog shows the real P&L, the $3 closing fee and the net

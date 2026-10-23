@@ -6,6 +6,7 @@ import {MockERC20} from "../../src/mocks/MockERC20.sol";
 import {MockOracle} from "../../src/mocks/MockOracle.sol";
 import {ModuleRegistry} from "../../src/core/ModuleRegistry.sol";
 import {CoreVault} from "../../src/core/CoreVault.sol";
+import {CreditRegistry} from "../../src/core/CreditRegistry.sol";
 
 /// @dev Shared setup: token, oracle, registry and vault, plus funded users.
 abstract contract BaseTest is Test {
@@ -13,6 +14,7 @@ abstract contract BaseTest is Test {
     MockOracle internal oracle;
     ModuleRegistry internal registry;
     CoreVault internal vault;
+    CreditRegistry internal credit;
 
     address internal admin = makeAddr("admin");
     address internal alice = makeAddr("alice");
@@ -25,6 +27,7 @@ abstract contract BaseTest is Test {
         oracle = new MockOracle(admin, 0);
         registry = new ModuleRegistry(admin);
         vault = new CoreVault(usdc, registry);
+        credit = new CreditRegistry(registry, vault);
 
         vm.prank(admin);
         oracle.setPrice(ETH_USD, 3000e18);

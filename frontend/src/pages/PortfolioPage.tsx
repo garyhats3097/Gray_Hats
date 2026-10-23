@@ -96,7 +96,7 @@ export default function PortfolioPage() {
 
             <Card
               title="Lending health"
-              info="Health factor = lending collateral × 85% ÷ debt. Below 1.0 the loan can be liquidated."
+              info="Health factor = lending collateral × your loan's liquidation threshold (85% by default, higher with good credit) ÷ debt. Below 1.0 the loan can be liquidated."
               action={
                 <Link to="/lending" className="text-[13px] font-medium text-accent hover:underline">
                   Manage
@@ -154,7 +154,7 @@ export default function PortfolioPage() {
               }
             >
               {s.debt === 0n && s.lendingCollateral === 0n ? (
-                <EmptyState icon={<HandCoins size={18} />} title="No active loan" body="Allocate collateral to Lending to borrow up to 75% of it." />
+                <EmptyState icon={<HandCoins size={18} />} title="No active loan" body="Allocate collateral to Lending to borrow against it: 75% by default, up to 120% with good credit." />
               ) : (
                 <div className="divide-y divide-line">
                   <KeyValue label="Collateral in Lending" value={fmtUsd(s.lendingCollateral)} />

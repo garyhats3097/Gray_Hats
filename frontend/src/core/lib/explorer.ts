@@ -5,6 +5,7 @@ import { contracts, ADMIN_ADDRESS, ETH_USD } from "../../config/contracts";
 const CONTRACTS: { name: string; role: string; address: Address; abi: Abi }[] = [
   { name: "CoreVault", role: "Holds all collateral; the shared ledger", ...contracts.vault },
   { name: "ModuleRegistry", role: "Allow-list of modules that may use the vault", ...contracts.registry },
+  { name: "CreditRegistry", role: "Shared on-chain credit history and scores", ...contracts.credit },
   { name: "PerpsModule", role: "Perpetual futures rules", ...contracts.perps },
   { name: "LendingModule", role: "Borrowing and repayment rules", ...contracts.lending },
   { name: "MarketMakerModule", role: "Indicative bid/ask quotes (stub)", ...contracts.marketMaker },
