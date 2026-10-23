@@ -4,6 +4,7 @@ import { Blocks, CheckCircle2, Search, ShieldAlert, ShieldCheck, Users, XCircle 
 import { useAllUsers, useProtocolState, useRecentChain, type ExplorerTx } from "../core/hooks/useExplorer";
 import { CONTRACT_DIRECTORY, decodeCall, decodeLogs, isContract, labelFor } from "../core/lib/explorer";
 import { PageHeader } from "../core/components/PageHeader";
+import { LiquidationsCard } from "../core/components/LiquidationsCard";
 import { AllocationBar } from "../core/components/AllocationBar";
 import { fmtHealth } from "../core/components/HealthGauge";
 import { Modal } from "../core/components/Modal";
@@ -126,7 +127,7 @@ export default function ExplorerPage() {
           label="Chain time"
           value={latestBlock ? new Date(latestBlock.timestamp * 1000).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" }) : "—"}
           sub={latestBlock ? new Date(latestBlock.timestamp * 1000).toLocaleTimeString() : undefined}
-          info="Timestamp of the latest block. It runs ahead of real time if Demo controls skipped time forward."
+          info="Timestamp of the latest block. The chain runs on real time."
         />
         <StatCard label="Users" value={users.data ? String(users.data.length) : "—"} sub={`${protocol.positionsOpened ?? "—"} perp positions opened`} />
       </div>
@@ -182,6 +183,8 @@ export default function ExplorerPage() {
           </ul>
         </Card>
       </div>
+
+      <LiquidationsCard className="mt-5" />
 
       <Card title="All users" className="mt-5" padded={false} info="Every address that has deposited, with its live position. Each wallet has its own separate ledger entry.">
         {users.isLoading ? (

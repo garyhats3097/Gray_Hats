@@ -50,6 +50,10 @@ export default function HelpPage() {
                 <code className="rounded bg-sunken px-1">./scripts/start-chain.sh</code>; it refuses to start if another chain is already running.
               </li>
               <li>
+                <b>Trading says the price is out of date, or the chart is empty:</b> the live ETH price feed needs internet and runs inside{" "}
+                <code className="rounded bg-sunken px-1">./scripts/start-chain.sh</code>. Check <code className="rounded bg-sunken px-1">.anvil/price-feed.log</code>, then restart the script.
+              </li>
+              <li>
                 <b>Lending shows $0 even though Loan history has entries:</b> the chain was time-travelled and then restarted with an older start
                 script, so its clock went backwards. Run <code className="rounded bg-sunken px-1">git pull</code> and restart with{" "}
                 <code className="rounded bg-sunken px-1">./scripts/start-chain.sh</code>; it repairs the clock. No data is lost.

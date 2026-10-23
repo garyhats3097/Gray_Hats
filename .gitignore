@@ -16,3 +16,7 @@ Thumbs.db
 
 # Saved local chain (per computer)
 .anvil/
+
+# Real price history written by scripts/price-feed.mjs
+frontend/public/eth-history.json
+frontend/public/eth-history.json.tmp

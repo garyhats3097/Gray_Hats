@@ -1,13 +1,12 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
-import { CandlestickChart, FlaskConical, History } from "lucide-react";
+import { CandlestickChart, History } from "lucide-react";
 import { useAccountState } from "../../core/hooks/useAccountState";
 import { useActivity } from "../../core/hooks/useActivity";
 import { PageHeader } from "../../core/components/PageHeader";
 import { ActivityTable } from "../../core/components/ActivityTable";
 import { Card, EmptyState, Spinner, Stat, Tabs, cx } from "../../core/components/ui";
-import { fmtSignedUsd, fmtUsd, toNumber } from "../../core/lib/format";
-import { useMarkPrice, useOpenPositions, usePerpsPool, usePriceHistory } from "./hooks";
+import { fmtSignedUsd, fmtUsd } from "../../core/lib/format";
+import { change24h, useEthHistory, useMarkPrice, useOpenPositions, usePerpsPool } from "./hooks";
 import { PriceChart } from "./PriceChart";
 import { TradePanel } from "./TradePanel";
 import { PositionsTable } from "./PositionsTable";
@@ -16,13 +15,12 @@ export default function PerpsPage() {
   const s = useAccountState();
   const { price } = useMarkPrice();
   const pool = usePerpsPool();
-  const history = usePriceHistory();
+  const history = useEthHistory();
   const { positions, isLoading } = useOpenPositions(s.positionIds);
   const activity = useActivity();
   const [tab, setTab] = useState<"open" | "closed">("open");
 
-  const first = history.data?.[0]?.price;
-  const change = first && price !== undefined ? ((toNumber(price) - first) / first) * 100 : undefined;
+  const change = change24h(history.data, price);
   const closed = (activity.data ?? []).filter((i) => i.module === "Perpetuals" && (i.type === "Position closed" || i.type === "Position liquidated"));
   const realized = closed.reduce((sum, i) => sum + (i.signed ?? 0n), 0n);
 
@@ -30,12 +28,7 @@ export default function PerpsPage() {
     <>
       <PageHeader
         title="Perpetuals"
-        subtitle="Trade ETH/USD with leverage. Margin is locked in the shared vault while a position is open."
-        action={
-          <Link to="/demo" className="inline-flex h-10 items-center gap-2 rounded-xl border border-line-strong bg-surface px-4 text-sm font-medium hover:bg-sunken">
-            <FlaskConical size={16} /> Demo controls
-          </Link>
-        }
+        subtitle="Trade ETH/USD with leverage at the real market price. Margin is locked in the shared vault while a position is open."
       />
 
       <Card padded={false} className="mb-5">
@@ -44,12 +37,12 @@ export default function PerpsPage() {
             <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[#627eea] text-sm font-bold text-white">Ξ</span>
             <div>
               <p className="font-semibold">ETH/USD</p>
-              <p className="text-xs text-subtle">Perpetual · oracle price</p>
+              <p className="text-xs text-subtle">Perpetual · real market price</p>
             </div>
           </div>
-          <Stat label="Mark price" value={price === undefined ? "—" : fmtUsd(price)} />
+          <Stat label="Mark price" value={price === undefined ? "—" : fmtUsd(price)} info="The on-chain oracle price, updated every 15 seconds from the real ETH market (Coinbase, Kraken or CoinGecko)." />
           <Stat
-            label="Change since launch"
+            label="24h change"
             value={change === undefined ? "—" : `${change >= 0 ? "+" : ""}${change.toFixed(2)}%`}
             tone={change === undefined || change === 0 ? undefined : change > 0 ? "positive" : "negative"}
           />
@@ -59,7 +52,7 @@ export default function PerpsPage() {
       </Card>
 
       <div className="grid gap-5 lg:grid-cols-3">
-        <Card title="Price" info="Mock oracle price history. It only changes when the admin sets a new price (see Demo controls)." className="lg:col-span-2">
+        <Card title="Price" info="Real ETH/USD market history, followed by the live on-chain oracle price that the contracts use." className="lg:col-span-2">
           <PriceChart positions={positions} />
         </Card>
         <Card title="Trade" className="h-fit lg:row-span-2">

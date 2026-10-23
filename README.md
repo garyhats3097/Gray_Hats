@@ -22,9 +22,9 @@ frontend/    React + TypeScript + Vite + wagmi/viem + Tailwind
   src/core/        app shell, shared UI kit, vault hooks   ← never edited to add a module
   src/modules/     one folder per module (page + module.ts manifest)
   src/modules.ts   list of mounted modules (sidebar + routes)
-  src/pages/       Portfolio, Vault, Activity, Explorer, Help, Demo controls
+  src/pages/       Portfolio, Vault, Activity, Explorer, Help
   src/config/      chain, contract addresses (auto-written) and ABIs (generated)
-scripts/     start-chain.sh / reset-chain.sh (saved local chain), price-feed.sh (real ETH price)
+scripts/     start-chain.sh / reset-chain.sh (saved local chain), price-feed.mjs (real ETH price, started automatically)
 docs/        ACCOUNTING.md, DEMO_SCRIPT.md, LIMITATIONS.md
 ```
 
@@ -73,14 +73,15 @@ reach the chain, or when the chain doesn't have the contracts.
 > Don't run `Deploy.s.sol` by hand on a saved chain — it creates new, empty contracts and the
 > app switches to them. `start-chain.sh` only deploys on a fresh chain.
 
-### Real ETH prices (optional third terminal)
-```bash
-./scripts/price-feed.sh        # pushes the real ETH/USD price into the oracle every 15 s
-./scripts/price-feed.sh 60     # …or every 60 s
-```
-Sources: Coinbase → Kraken → CoinGecko (public, no key; first that answers wins). Perpetuals,
-the price chart and the Market Maker then follow the real market. While it runs, it overwrites
-prices set by hand in Demo controls on its next update. Needs internet access.
+### Real ETH prices (automatic)
+`start-chain.sh` connects the chain to the **real ETH market**:
+- a new chain starts at the real current ETH price (internet required);
+- `scripts/price-feed.mjs` runs in the background and pushes the real price into the oracle every
+  15 seconds (Coinbase → Kraken → CoinGecko, public, no key). Log: `.anvil/price-feed.log`;
+- it also saves real price history (1D / 7D / 30D / 1Y) that the price chart shows;
+- the oracle rejects prices older than 15 minutes, so trading stops if the feed stops.
+
+There are no controls in the site to change the price or the chain's clock.
 
 ### Market Maker module
 A quote-only stub: indicative bid/ask around the oracle price with a configurable spread. See
@@ -103,12 +104,6 @@ Every wallet address has its own position in the vault.
 The **Explorer** page shows the chain itself: latest blocks, every transaction with its decoded
 function call and events, a live solvency check of the vault, and every user's position.
 It works without connecting a wallet.
-
-### Demo controls (local only)
-The **Demo controls** page moves the mock ETH price, skips the chain clock forward (so lending
-interest builds up) and lists anything that can be liquidated. It asks the local Anvil node to
-sign as the admin test account, so no private key is stored in the frontend. It does nothing on
-a real network.
 
 After changing a contract: `cd contracts && forge build && cd ../frontend && npm run sync-abis`.
 

@@ -29,7 +29,10 @@ contract Deploy is Script, MarketMakerSetup {
         vm.startBroadcast(key);
 
         MockERC20 usdc = new MockERC20("Mock USD Coin", "mUSDC");
-        MockOracle oracle = new MockOracle(deployer, 0); // staleness check off for demos
+        // start-chain.sh passes the REAL current ETH price and a staleness limit; tests use the defaults.
+        uint256 initialPrice = vm.envOr("INITIAL_ETH_PRICE_WEI", uint256(3_000e18));
+        uint256 maxAge = vm.envOr("ORACLE_MAX_AGE", uint256(0));
+        MockOracle oracle = new MockOracle(deployer, maxAge);
         ModuleRegistry registry = new ModuleRegistry(deployer);
         CoreVault vault = new CoreVault(usdc, registry);
         PerpsModule perps = new PerpsModule(deployer, vault, oracle);
@@ -37,7 +40,7 @@ contract Deploy is Script, MarketMakerSetup {
 
         registry.registerModule(address(perps));
         registry.registerModule(address(lending));
-        oracle.setPrice(ETH_USD, 3_000e18);
+        oracle.setPrice(ETH_USD, initialPrice);
         perps.listMarket(ETH_USD, "ETH/USD");
 
         // Seed protocol liquidity (clearly test money)

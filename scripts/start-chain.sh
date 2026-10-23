@@ -44,13 +44,20 @@ until cast block-number --rpc-url http://127.0.0.1:8545 >/dev/null 2>&1; do
 done
 
 if [ "$FRESH" = 1 ]; then
-  echo ">>> New chain — deploying contracts…"
-  (cd contracts && forge script script/Deploy.s.sol --rpc-url http://127.0.0.1:8545 --broadcast)
+  echo ">>> New chain — fetching the real ETH price…"
+  if ! PRICE_WEI=$(node scripts/price-feed.mjs --price-wei); then
+    echo "!!! Can't start a new chain without the real ETH price (needs internet). Check your connection and try again."
+    exit 1
+  fi
+  echo ">>> Real ETH price: \$$(cast --from-wei "$PRICE_WEI" | sed 's/\(\.[0-9][0-9]\).*/\1/'). Deploying contracts…"
+  # Oracle prices older than 15 minutes are rejected, so trading stops if the live feed stops.
+  (cd contracts && INITIAL_ETH_PRICE_WEI=$PRICE_WEI ORACLE_MAX_AGE=900 \
+    forge script script/Deploy.s.sol --rpc-url http://127.0.0.1:8545 --broadcast >/dev/null)
   echo ">>> Deployed. Your chain is saved in $STATE_FILE"
 else
   echo ">>> Loaded saved chain from $STATE_FILE (block $(cast block-number --rpc-url http://127.0.0.1:8545)). No deploy needed."
 
-  # Anvil restarts its clock at the real current time. If Demo controls had skipped time forward,
+  # Anvil restarts its clock at the real current time. If an older chain had been time-travelled,
   # new blocks would be OLDER than earlier ones, and the lending interest maths would fail
   # ("arithmetic underflow"). Move the clock to just after the newest timestamp the chain has seen.
   LATEST=$(cast block-number --rpc-url http://127.0.0.1:8545)
@@ -75,5 +82,11 @@ else
       && echo ">>> Market Maker added." || echo "!!! Could not add the Market Maker module — run: cd contracts && forge script script/AddMarketMaker.s.sol --rpc-url http://127.0.0.1:8545 --broadcast"
   fi
 fi
+# Live real-world ETH price → oracle every 15 s, plus price history for the chart.
+node scripts/price-feed.mjs > "$STATE_DIR/price-feed.log" 2>&1 &
+FEED_PID=$!
+trap 'kill $FEED_PID 2>/dev/null; kill -INT $ANVIL_PID 2>/dev/null; wait $ANVIL_PID 2>/dev/null' INT TERM EXIT
+sleep 3
+echo ">>> Live ETH price feed running ($(tail -1 "$STATE_DIR/price-feed.log" | cut -c1-80)…). Log: $STATE_DIR/price-feed.log"
 echo ">>> Chain running on http://127.0.0.1:8545 — press Ctrl+C to stop (state is saved)."
 wait $ANVIL_PID

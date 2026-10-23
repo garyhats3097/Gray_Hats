@@ -113,3 +113,31 @@ export function maxSizeFor(free: bigint, leverage: number): bigint {
   const max = (free * lev * 1000n) / (1000n + lev);
   return max > lev ? max - lev : 0n;
 }
+
+export type HistoryRange = "1D" | "7D" | "30D" | "1Y";
+export type EthHistory = { updatedAt: number; sources: Partial<Record<HistoryRange, string>>; ranges: Partial<Record<HistoryRange, [number, number][]>> };
+
+/** Real ETH price history saved by scripts/price-feed.mjs (Coinbase/Kraken/CoinGecko). */
+export function useEthHistory() {
+  return useQuery({
+    queryKey: ["eth-history"],
+    refetchInterval: 60_000,
+    retry: false,
+    queryFn: async (): Promise<EthHistory | null> => {
+      const res = await fetch("/eth-history.json", { cache: "no-store" });
+      if (!res.ok) return null;
+      try {
+        return (await res.json()) as EthHistory;
+      } catch {
+        return null;
+      }
+    },
+  });
+}
+
+/** 24-hour change from the real 1D history and the current oracle price (percent). */
+export function change24h(history: EthHistory | null | undefined, price: bigint | undefined): number | undefined {
+  const first = history?.ranges["1D"]?.[0]?.[1];
+  if (!first || price === undefined) return undefined;
+  return ((Number(price) / 1e18 - first) / first) * 100;
+}

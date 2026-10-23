@@ -18,7 +18,7 @@ Legend: 🔴 security / trust risk · 🟡 financial-model simplification · ⚪
 | Shared vault accounting (deposits, locks, settlement) | **Real** smart-contract logic, enforced on-chain and tested |
 | Perpetuals and Lending rules | **Real** on-chain logic, deliberately simplified (see §4–5) |
 | Collateral token (mUSDC) | **Simulated**: a mock token that anyone can mint for free |
-| ETH/USD price | A mock oracle set by the admin: by hand (Demo controls) or from the **real market** via `scripts/price-feed.sh` (Coinbase/Kraken/CoinGecko). Not a decentralised oracle: one key pushes the price |
+| ETH/USD price | **Real market price** (Coinbase → Kraken → CoinGecko), pushed into a mock oracle every 15 s by `scripts/price-feed.mjs` using the admin test key. Not a decentralised oracle: one key pushes the price, and anyone holding that public test key could still change it from a terminal |
 | Market Maker | **Stub**: indicative quotes only, no funded liquidity, no trades (see docs/MARKET_MAKER.md) |
 | Perps pool and lending pool liquidity | **Simulated**: 1,000,000 test mUSDC each, seeded by the deploy script. There are no real liquidity providers or lenders |
 | Blockchain | Local Anvil node only. `scripts/start-chain.sh` saves it to `.anvil/state.json` on this computer; plain `anvil` forgets everything on restart |
@@ -127,8 +127,10 @@ These are the most important limitations. In this prototype the admin and the mo
 - **The previews copy contract constants** (fees, LTV, thresholds) in
   `modules/*/hooks.ts`. If a constant changes in Solidity, update these too. The contracts
   always re-check everything, so a stale preview can mislead but cannot break accounting.
-- **Demo controls only work on Anvil.** They rely on Anvil signing for its built-in admin account
-  and on its time-travel commands.
+- **Price history** comes from public APIs and is saved to `frontend/public/eth-history.json` by
+  the feed. Without internet, the chart only shows on-chain prices and no new chain can start.
+- **Lending liquidation through interest takes years** at 5% APR on real time, so it can't be
+  shown live in a demo any more (there is no time travel).
 - **One network** (Anvil, chain 31337). Contract addresses come from `deployments.json`.
 - **The Explorer reads the last 40 blocks** and every user from `Deposited` events on each new
   block. Fine for a local demo; a real deployment needs an indexer.

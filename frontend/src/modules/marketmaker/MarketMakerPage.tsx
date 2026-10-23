@@ -197,7 +197,7 @@ export default function MarketMakerPage() {
             label="Reference price"
             value={mm.referencePrice === undefined ? "—" : fmtUsd(mm.referencePrice)}
             sub={mm.priceUpdatedAt ? `Updated ${fmtTime(mm.priceUpdatedAt)} (chain time)` : undefined}
-            info="The same oracle price Perpetuals uses. Run ./scripts/price-feed.sh to follow the real ETH market."
+            info="The same on-chain oracle price Perpetuals uses, updated every 15 seconds from the real ETH market."
           />
           <Stat label="Spread" value={mm.spreadBps === undefined ? "—" : `${mm.spreadBps} bps`} sub={mm.spreadBps === undefined ? undefined : pct(mm.spreadBps)} />
           <div>
