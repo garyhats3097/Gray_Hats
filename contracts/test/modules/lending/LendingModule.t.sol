@@ -175,6 +175,27 @@ contract LendingModuleTest is BaseTest {
         assertTrue(vault.isSolvent());
     }
 
+    /// A local chain restarted after time travel can have a clock EARLIER than the loan's
+    /// last accrual. Reading and using the loan must still work (it used to underflow).
+    function test_ClockGoingBackwardsDoesNotBreakTheLoan() public {
+        _addCollateral(400e18);
+        vm.warp(block.timestamp + 365 days);
+        _borrow(100e18); // lastAccrued = one year in the "future"
+        vm.warp(block.timestamp - 300 days); // clock jumps back
+
+        (uint256 collateral, uint256 debt,,) = lending.getLoan(alice);
+        assertEq(collateral, 400e18);
+        assertEq(debt, 100e18, "no interest for negative time");
+
+        vm.prank(alice);
+        lending.repay(alice, 40e18);
+        assertEq(lending.debtOf(alice), 60e18);
+
+        // once the clock passes the old accrual point, interest resumes normally
+        vm.warp(block.timestamp + 300 days + 365 days);
+        assertApproxEqAbs(lending.debtOf(alice), 63e18, 1);
+    }
+
     // ------------------------------------------------------------------ fuzz
 
     function testFuzz_BorrowRepayKeepsSolvent(uint256 col, uint256 amt, uint256 dt) public {

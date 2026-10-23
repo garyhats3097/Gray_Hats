@@ -36,6 +36,8 @@ export function useAccountState() {
     isLoading: !!address && isLoading,
     /** true only when the vault was actually read (false if the chain or contracts are unreachable) */
     loaded: data?.[2]?.status === "success",
+    /** the vault answered but the Lending module's loan read reverted */
+    loanReadFailed: data?.[2]?.status === "success" && data?.[8]?.status === "failure",
     isError,
     refetch,
     walletBalance: r<bigint>(0) ?? 0n,

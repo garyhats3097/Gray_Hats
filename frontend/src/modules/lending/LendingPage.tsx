@@ -61,6 +61,16 @@ export default function LendingPage() {
         </div>
       )}
 
+      {s.loanReadFailed && (
+        <div className="mb-5">
+          <Callout tone="negative" icon={<AlertTriangle size={14} className="text-negative" />}>
+            <b>Couldn't read your loan from the chain</b>, so the numbers below may show $0. This happens when a local chain that was
+            time-travelled is restarted with an older version of the start script. Stop the chain (Ctrl+C), run{" "}
+            <code className="rounded bg-surface px-1">git pull</code>, then start it again with{" "}
+            <code className="rounded bg-surface px-1">./scripts/start-chain.sh</code>. Your data is not lost.
+          </Callout>
+        </div>
+      )}
       {s.loaded && s.deposits === 0n && (
         <div className="mb-5">
           <Callout tone="accent" icon={<Info size={14} className="text-accent" />}>

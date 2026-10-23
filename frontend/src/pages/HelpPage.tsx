@@ -50,6 +50,11 @@ export default function HelpPage() {
                 <code className="rounded bg-sunken px-1">./scripts/start-chain.sh</code>; it refuses to start if another chain is already running.
               </li>
               <li>
+                <b>Lending shows $0 even though Loan history has entries:</b> the chain was time-travelled and then restarted with an older start
+                script, so its clock went backwards. Run <code className="rounded bg-sunken px-1">git pull</code> and restart with{" "}
+                <code className="rounded bg-sunken px-1">./scripts/start-chain.sh</code>; it repairs the clock. No data is lost.
+              </li>
+              <li>
                 <b>Deposited, but Lending shows $0 collateral:</b> vault deposits only become Lending collateral after you <b>Allocate</b> them on the Lending page.
               </li>
               <li>

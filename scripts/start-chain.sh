@@ -49,6 +49,23 @@ if [ "$FRESH" = 1 ]; then
   echo ">>> Deployed. Your chain is saved in $STATE_FILE"
 else
   echo ">>> Loaded saved chain from $STATE_FILE (block $(cast block-number --rpc-url http://127.0.0.1:8545)). No deploy needed."
+
+  # Anvil restarts its clock at the real current time. If Demo controls had skipped time forward,
+  # new blocks would be OLDER than earlier ones, and the lending interest maths would fail
+  # ("arithmetic underflow"). Move the clock to just after the newest timestamp the chain has seen.
+  LATEST=$(cast block-number --rpc-url http://127.0.0.1:8545)
+  MAX_TS=0
+  for ((n = 0; n <= LATEST; n++)); do
+    TS=$(cast block "$n" --field timestamp --rpc-url http://127.0.0.1:8545)
+    [ "$TS" -gt "$MAX_TS" ] && MAX_TS=$TS
+  done
+  NOW=$(date +%s)
+  if [ "$MAX_TS" -ge "$NOW" ]; then
+    cast rpc anvil_setTime $((MAX_TS + 1)) --rpc-url http://127.0.0.1:8545 >/dev/null
+    # Mine one empty block so the LATEST block (which the website reads at) has the fixed time.
+    cast rpc evm_mine --rpc-url http://127.0.0.1:8545 >/dev/null
+    echo ">>> Chain clock moved forward to $(date -d @$((MAX_TS + 1)) '+%d %b %Y %H:%M') (it had been time-travelled)."
+  fi
 fi
 echo ">>> Chain running on http://127.0.0.1:8545 — press Ctrl+C to stop (state is saved)."
 wait $ANVIL_PID

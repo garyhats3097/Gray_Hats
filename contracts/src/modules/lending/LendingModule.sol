@@ -183,7 +183,8 @@ contract LendingModule is IModule, ReentrancyGuard {
     function _accrue(address user) private {
         Loan storage loan = _loans[user];
         uint256 interest = _pendingInterest(loan);
-        loan.lastAccrued = block.timestamp;
+        // Never move the accrual point backwards (a test chain's clock can jump back).
+        if (block.timestamp > loan.lastAccrued) loan.lastAccrued = block.timestamp;
         if (interest > 0) {
             loan.debt += interest;
             emit InterestAccrued(user, interest, loan.debt);
@@ -191,7 +192,9 @@ contract LendingModule is IModule, ReentrancyGuard {
     }
 
     function _pendingInterest(Loan storage loan) private view returns (uint256) {
-        if (loan.debt == 0) return 0;
+        // If the clock is at or before the last accrual (e.g. a local chain restarted at an
+        // earlier time), there is no new interest. Without this check the subtraction reverts.
+        if (loan.debt == 0 || block.timestamp <= loan.lastAccrued) return 0;
         uint256 elapsed = block.timestamp - loan.lastAccrued;
         // round up so interest is never under-charged
         return (loan.debt * APR_BPS * elapsed + BPS * YEAR - 1) / (BPS * YEAR);
