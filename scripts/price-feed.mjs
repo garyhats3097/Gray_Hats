@@ -15,7 +15,7 @@ import { fileURLToPath } from "node:url";
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const RPC = process.env.RPC_URL ?? "http://127.0.0.1:8545";
 const INTERVAL_S = Number(process.env.PRICE_INTERVAL ?? 15);
-const HISTORY_EVERY_S = 600;
+const HISTORY_EVERY_S = 120; // 1-minute candles for the 1H view stay fresh
 const HISTORY_FILE = resolve(ROOT, "frontend/public/eth-history.json");
 // Anvil account #0 — a PUBLICLY KNOWN test key. Never use it on a real network.
 const ADMIN_KEY = "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80";
@@ -32,6 +32,7 @@ const URL_ = {
 
 /** Chart ranges: seconds of history, and the candle size each source should use. */
 const RANGES = {
+  "1H": { seconds: 3_600, coinbase: 60, kraken: 1, gecko: 1 },
   "1D": { seconds: 86_400, coinbase: 300, kraken: 5, gecko: 1 },
   "7D": { seconds: 7 * 86_400, coinbase: 3_600, kraken: 60, gecko: 7 },
   "30D": { seconds: 30 * 86_400, coinbase: 21_600, kraken: 240, gecko: 30 },

@@ -53,7 +53,7 @@ In MetaMask:
 
 ## Act 3 — Real market data (1 min)
 
-1. **Perpetuals.** The chart shows the **real ETH price**: switch between **1D / 7D / 30D / 1Y**.
+1. **Perpetuals.** The chart shows the **real ETH price**: switch between **1H / 1D / 7D / 30D / 1Y**.
    > "This is real market history, and the line continues with the live on-chain price the
    > contracts use. It updates every 15 seconds. Nobody — including us — can set it from the site."
 2. Point at **Mark price** and **24h change**.

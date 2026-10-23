@@ -78,7 +78,7 @@ reach the chain, or when the chain doesn't have the contracts.
 - a new chain starts at the real current ETH price (internet required);
 - `scripts/price-feed.mjs` runs in the background and pushes the real price into the oracle every
   15 seconds (Coinbase → Kraken → CoinGecko, public, no key). Log: `.anvil/price-feed.log`;
-- it also saves real price history (1D / 7D / 30D / 1Y) that the price chart shows;
+- it also saves real price history (1H with 1-minute candles, 1D / 7D / 30D / 1Y) that the price chart shows;
 - the oracle rejects prices older than 15 minutes, so trading stops if the feed stops.
 
 There are no controls in the site to change the price or the chain's clock.

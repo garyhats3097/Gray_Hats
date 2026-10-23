@@ -114,7 +114,7 @@ export function maxSizeFor(free: bigint, leverage: number): bigint {
   return max > lev ? max - lev : 0n;
 }
 
-export type HistoryRange = "1D" | "7D" | "30D" | "1Y";
+export type HistoryRange = "1H" | "1D" | "7D" | "30D" | "1Y";
 export type EthHistory = { updatedAt: number; sources: Partial<Record<HistoryRange, string>>; ranges: Partial<Record<HistoryRange, [number, number][]>> };
 
 /** Real ETH price history saved by scripts/price-feed.mjs (Coinbase/Kraken/CoinGecko). */
