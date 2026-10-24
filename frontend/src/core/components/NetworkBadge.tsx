@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useAccount, useBytecode, useSwitchChain } from "wagmi";
 import { AlertTriangle } from "lucide-react";
 import { anvilLocal } from "../../config/chain";
@@ -82,4 +83,42 @@ export function ChainStatusBanner() {
     );
   }
   return null;
+}
+
+/** Adds (or switches to) our chain in MetaMask in one click, instead of typing the network in by hand. */
+export function AddNetworkButton() {
+  const toast = useToast();
+  const [busy, setBusy] = useState(false);
+  const eth = (window as { ethereum?: { request: (a: { method: string; params?: unknown[] }) => Promise<unknown> } }).ethereum;
+  if (!eth) return null;
+  return (
+    <Button
+      size="sm"
+      variant="secondary"
+      loading={busy}
+      onClick={async () => {
+        setBusy(true);
+        try {
+          await eth.request({
+            method: "wallet_addEthereumChain",
+            params: [
+              {
+                chainId: `0x${anvilLocal.id.toString(16)}`,
+                chainName: anvilLocal.name,
+                nativeCurrency: anvilLocal.nativeCurrency,
+                rpcUrls: anvilLocal.rpcUrls.default.http,
+              },
+            ],
+          });
+          toast.push({ kind: "success", title: "Network added", body: `MetaMask is set up for ${anvilLocal.name}.` });
+        } catch (e) {
+          toast.push({ kind: "error", title: "Network not added", body: friendlyError(e) });
+        } finally {
+          setBusy(false);
+        }
+      }}
+    >
+      Add {anvilLocal.name} to MetaMask
+    </Button>
+  );
 }

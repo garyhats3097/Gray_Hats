@@ -1,6 +1,7 @@
 import { anvilLocal } from "../config/chain";
 import { contracts, COLLATERAL_SYMBOL } from "../config/contracts";
 import { PageHeader } from "../core/components/PageHeader";
+import { AddNetworkButton } from "../core/components/NetworkBadge";
 import { Callout, Card } from "../core/components/ui";
 
 const Step = ({ n, children }: { n: number; children: React.ReactNode }) => (
@@ -19,16 +20,26 @@ export default function HelpPage() {
           <ol className="space-y-3">
             <Step n={1}>Make sure the chain is running (<code className="rounded bg-sunken px-1">./scripts/start-chain.sh</code> in a terminal).</Step>
             <Step n={2}>
-              MetaMask → network menu → <b>Add a custom network</b>.
+              <p>Add the network to MetaMask in one click:</p>
+              <div className="mt-2">
+                <AddNetworkButton />
+              </div>
+              <p className="mt-2 text-muted">
+                Or by hand: MetaMask → network menu → <b>Add a custom network</b>. Network name <b>{anvilLocal.name}</b>, RPC URL{" "}
+                <b>{anvilLocal.rpcUrls.default.http[0]}</b>, Chain ID <b>{anvilLocal.id}</b>, currency <b>ETH</b>.
+              </p>
             </Step>
             <Step n={3}>
-              Network name <b>{anvilLocal.name}</b>, RPC URL <b>{anvilLocal.rpcUrls.default.http[0]}</b>, Chain ID <b>{anvilLocal.id}</b>, currency <b>ETH</b>.
+              Connect your wallet here, then press <b>Get test {COLLATERAL_SYMBOL}</b> on the Shared Vault page. A new account also gets test ETH for fees
+              automatically. (Team laptops can instead import Anvil's test account #1: MetaMask → <b>Add account → Import account</b>.)
             </Step>
-            <Step n={4}>
-              Import a test account: MetaMask → <b>Add account → Import account</b>, and paste one of the private keys Anvil prints at start-up (e.g. account #1).
-            </Step>
-            <Step n={5}>Connect your wallet here, use the faucet for test {COLLATERAL_SYMBOL}, then deposit.</Step>
+            <Step n={4}>Deposit into the Shared Vault, then use the modules.</Step>
           </ol>
+          <div className="mt-5">
+            <Callout tone="accent">
+              <b>No MetaMask?</b> Choose <b>Connect Wallet → Demo wallet</b>. It creates a test account in this browser with test money, no install needed.
+            </Callout>
+          </div>
           <div className="mt-5">
             <Callout tone="warning">
               Anvil's private keys are public. Only use them on the local test network, and never send real funds to them. We never ask for your seed phrase.
