@@ -16,7 +16,7 @@ const FLOW = [
 ];
 
 /** One vault feeding every module — the core idea, drawn as a live ledger. */
-function FlowDiagram() {
+export function FlowDiagram() {
   return (
     <div className="anim-rise mx-auto mt-12 w-full max-w-xl" aria-hidden>
       <div className="flex justify-center">
@@ -53,7 +53,7 @@ function FlowDiagram() {
       <div className="grid grid-cols-3 gap-2 sm:gap-3">
         {FLOW.map(({ label, icon: Icon, color }) => (
           <div key={label} className="flex items-center justify-center gap-2 rounded-xl border border-line bg-surface/80 px-2 py-2 text-[12px] font-medium text-ink sm:text-[13px]">
-            <Icon size={14} style={{ color }} className="shrink-0" />
+            <Icon size={14} style={{ color }} className="hidden shrink-0 sm:block" />
             <span className="truncate">{label}</span>
           </div>
         ))}

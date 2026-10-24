@@ -75,21 +75,23 @@ export default function PerpsPage() {
             ) : null
           }
         >
-          {tab === "open" ? (
-            isLoading ? (
-              <Spinner />
-            ) : positions.length === 0 ? (
-              <EmptyState icon={<CandlestickChart size={18} />} title="No open positions" body="Use the trade panel to open a long or short." />
+          <div key={tab} className="animate-fade">
+            {tab === "open" ? (
+              isLoading ? (
+                <Spinner />
+              ) : positions.length === 0 ? (
+                <EmptyState icon={<CandlestickChart size={18} />} title="No open positions" body="Use the trade panel to open a long or short." />
+              ) : (
+                <PositionsTable positions={positions} price={price} />
+              )
+            ) : closed.length === 0 ? (
+              <EmptyState icon={<History size={18} />} title="No closed positions yet" body="Realized profit and loss appears here after you close a position." />
             ) : (
-              <PositionsTable positions={positions} price={price} />
-            )
-          ) : closed.length === 0 ? (
-            <EmptyState icon={<History size={18} />} title="No closed positions yet" body="Realized profit and loss appears here after you close a position." />
-          ) : (
-            <div className="px-5 pb-2 sm:px-6">
-              <ActivityTable items={closed} compact />
-            </div>
-          )}
+              <div className="px-5 pb-2 sm:px-6">
+                <ActivityTable items={closed} compact />
+              </div>
+            )}
+          </div>
         </Card>
       </div>
     </>

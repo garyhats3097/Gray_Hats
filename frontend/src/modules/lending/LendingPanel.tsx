@@ -134,7 +134,7 @@ export function LendingPanel() {
       </p>
 
       {block ? (
-        <div className="space-y-4">
+        <div key={action} className="animate-fade space-y-4">
           <Callout icon={<Info size={14} />}>{block.message}</Callout>
           {block.go && (
             <Button className="w-full" variant="secondary" onClick={() => switchTo(block.go!)}>
@@ -150,7 +150,7 @@ export function LendingPanel() {
           )}
         </div>
       ) : (
-        <>
+        <div key={action} className="animate-fade space-y-5">
           <AmountInput label={inputLabel[action]} value={input} onChange={setInput} max={max} maxLabel={maxLabel[action]} symbol={COLLATERAL_SYMBOL} error={error} disabled={busy} />
 
           <div className="divide-y divide-line rounded-xl bg-sunken/60 px-3.5">
@@ -190,7 +190,7 @@ export function LendingPanel() {
           <Button className="w-full" size="lg" disabled={amount === null || !!error || busy} loading={busy} onClick={submit}>
             {amount === null ? "Enter an amount" : needsApproval ? `Approve ${COLLATERAL_SYMBOL}` : isFullRepay ? "Repay full loan" : labels[action]}
           </Button>
-        </>
+        </div>
       )}
     </div>
   );

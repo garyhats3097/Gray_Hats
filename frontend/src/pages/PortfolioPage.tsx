@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowRight, CandlestickChart, HandCoins, Plus, Vault } from "lucide-react";
+import { ArrowRight, CandlestickChart, HandCoins, Plus } from "lucide-react";
 import { useAccountState } from "../core/hooks/useAccountState";
 import { useActivity } from "../core/hooks/useActivity";
 import { useMarkPrice, useOpenPositions } from "../modules/perps/hooks";
@@ -10,7 +10,7 @@ import { HealthGauge } from "../core/components/HealthGauge";
 import { ActivityTable } from "../core/components/ActivityTable";
 import { Modal } from "../core/components/Modal";
 import { VaultForm } from "../core/components/VaultForm";
-import { FaucetButton } from "../core/components/FaucetButton";
+import { GetStarted } from "../core/components/GetStarted";
 import { Badge, Button, Card, EmptyState, KeyValue, Skeleton, StatCard, cx } from "../core/components/ui";
 import { fmtSignedUsd, fmtUsd, toNumber } from "../core/lib/format";
 
@@ -43,25 +43,7 @@ export default function PortfolioPage() {
       />
 
       {isEmpty ? (
-        <Card>
-          <EmptyState
-            icon={<Vault size={20} />}
-            title="No collateral deposited yet"
-            body={
-              s.walletBalance === 0n
-                ? "Get some test mUSDC from the faucet, then deposit it into the shared vault to start trading or borrowing."
-                : `You have ${fmtUsd(s.walletBalance)} test mUSDC in your wallet. Deposit it into the shared vault to get started.`
-            }
-            action={
-              <div className="flex flex-wrap justify-center gap-2">
-                {s.walletBalance === 0n && <FaucetButton variant="secondary" />}
-                <Button onClick={() => setDepositOpen(true)} disabled={s.walletBalance === 0n}>
-                  Deposit Test Collateral
-                </Button>
-              </div>
-            }
-          />
-        </Card>
+        <GetStarted walletBalance={s.walletBalance} onDeposit={() => setDepositOpen(true)} />
       ) : (
         <div className="space-y-5">
           {/* Headline numbers — parts of ONE deposit, never summed with PnL or debt */}

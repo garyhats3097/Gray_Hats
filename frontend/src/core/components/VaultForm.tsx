@@ -78,7 +78,7 @@ export function VaultForm({ initial = "deposit", onDone }: { initial?: VaultActi
         disabled={busy}
       />
 
-      <div className="divide-y divide-line rounded-xl bg-sunken/60 px-3.5">
+      <div key={action} className="animate-fade divide-y divide-line rounded-xl bg-sunken/60 px-3.5">
         {action === "deposit" ? (
           <>
             <KeyValue label="Deposited now" value={fmtUsd(s.deposits)} />
