@@ -73,9 +73,18 @@ function ChatPanel({ onClose }: { onClose: () => void }) {
   const listRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
-  useEffect(() => saveMessages(messages), [messages]);
-  useEffect(() => listRef.current?.scrollTo({ top: listRef.current.scrollHeight, behavior: "smooth" }), [messages, busy]);
-  useEffect(() => inputRef.current?.focus(), []);
+  // Effects use { } bodies on purpose: some browsers/extensions make scrollTo or focus return a
+  // value, and React would then try to call it as a cleanup function ("destroy is not a function").
+  useEffect(() => {
+    saveMessages(messages);
+  }, [messages]);
+  useEffect(() => {
+    const list = listRef.current;
+    if (list) list.scrollTop = list.scrollHeight;
+  }, [messages, busy]);
+  useEffect(() => {
+    inputRef.current?.focus();
+  }, []);
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
     window.addEventListener("keydown", onKey);
