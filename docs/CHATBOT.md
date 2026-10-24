@@ -49,7 +49,7 @@ The site reaches it through the dev server's proxy, so open the site as usual
 | "The assistant isn't running" | Start it: `cd chatbot && npm start` |
 | "The assistant has no AI key yet" | Create `chatbot/.env` with your key, restart the assistant |
 | "The AI key is invalid / was refused" | Check the key in `chatbot/.env` |
-| "The free AI service is busy right now" (HTTP 503) | Google's free models are overloaded. The bot already retried and tried the backup models (`gemini-2.5-flash`, `gemini-2.5-flash-lite`); wait a minute, or switch to Groq |
+| "The free AI service is busy right now" (HTTP 503) | Google's free models are overloaded. The bot already retried and tried the backup models (`gemini-2.5-flash-lite`, `gemini-flash-latest`); wait a minute, or switch to Groq |
 | "The free AI quota is used up for now" | Free-tier limit reached on every model; wait a minute |
 | "AI model … was not found" | Set another model, e.g. `GEMINI_MODEL=gemini-2.5-flash` in `.env` |
 

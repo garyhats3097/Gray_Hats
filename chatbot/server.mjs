@@ -39,7 +39,7 @@ const HOST = process.env.CHAT_HOST || "127.0.0.1";
 const PROVIDERS = {
   gemini: {
     key: process.env.GEMINI_API_KEY,
-    model: process.env.GEMINI_MODEL || "gemini-flash-latest",
+    model: process.env.GEMINI_MODEL || "gemini-2.5-flash",
     keyName: "GEMINI_API_KEY",
     keyUrl: "https://aistudio.google.com/apikey",
   },
@@ -60,7 +60,7 @@ if (!P) {
 const MAX_MESSAGES = 12; // conversation turns sent to the AI
 const MAX_CHARS = 2000; // per message
 const RATE_PER_MINUTE = 15; // per visitor
-const TIMEOUT_MS = 30_000;
+const TIMEOUT_MS = 20_000; // per attempt; a slow model is skipped for the next one
 
 // ------------------------------------------------------------------ knowledge
 
@@ -140,7 +140,7 @@ function explainHttpError(status, body, model) {
 
 /** The configured Gemini model first, then other free models if it is busy or missing. */
 const GEMINI_MODELS = [
-  ...new Set([P.model, ...(process.env.GEMINI_FALLBACK_MODELS ?? "gemini-2.5-flash,gemini-2.5-flash-lite").split(",")].map((m) => m.trim()).filter(Boolean)),
+  ...new Set([P.model, ...(process.env.GEMINI_FALLBACK_MODELS ?? "gemini-2.5-flash-lite,gemini-flash-latest").split(",")].map((m) => m.trim()).filter(Boolean)),
 ];
 
 async function askGeminiWithFallback(system, messages) {
@@ -148,9 +148,16 @@ async function askGeminiWithFallback(system, messages) {
   for (const model of GEMINI_MODELS) {
     // A busy model often answers on a second try a moment later.
     for (let attempt = 0; attempt < 2; attempt++) {
+      const started = Date.now();
       try {
-        return await askGemini(model, system, messages);
+        const text = await askGemini(model, system, messages);
+        console.log(`[chat] ${model}: answered in ${((Date.now() - started) / 1000).toFixed(1)}s`);
+        return text;
       } catch (e) {
+        if (e?.name === "TimeoutError") {
+          console.error(`[chat] ${model}: no answer within ${TIMEOUT_MS / 1000}s, trying the next model`);
+          e = new ChatError(504, "The AI took too long to answer. Try again.", true);
+        }
         lastError = e;
         if (!(e instanceof ChatError) || !e.retry) throw e;
         if (e.status !== 503) break; // quota or missing model: go straight to the next model
@@ -170,7 +177,12 @@ async function askGemini(model, system, messages) {
     body: JSON.stringify({
       systemInstruction: { parts: [{ text: system }] },
       contents: messages.map((m) => ({ role: m.role === "assistant" ? "model" : "user", parts: [{ text: m.text }] })),
-      generationConfig: { temperature: 0.3, maxOutputTokens: 4096 },
+      generationConfig: {
+        temperature: 0.3,
+        maxOutputTokens: 4096,
+        // 2.5 Flash models "think" before answering by default, which is slow; a help bot doesn't need it.
+        ...(/^gemini-2\.5-flash/.test(model) && { thinkingConfig: { thinkingBudget: 0 } }),
+      },
     }),
   });
   const body = await res.text();
