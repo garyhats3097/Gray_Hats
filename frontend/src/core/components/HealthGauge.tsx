@@ -1,4 +1,32 @@
-import { cx } from "./ui";
+import { useEffect, useRef, useState } from "react";
+import { Ticker, cx } from "./ui";
+
+/** Eases a number toward `target` so the gauge needle sweeps instead of jumping. */
+function useTween(target: number, ms = 900) {
+  const [v, setV] = useState(0);
+  const from = useRef(0);
+  useEffect(() => {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      from.current = target;
+      setV(target);
+      return;
+    }
+    const start = performance.now();
+    const a = from.current;
+    let raf = 0;
+    const step = (now: number) => {
+      const p = Math.min((now - start) / ms, 1);
+      const e = 1 - Math.pow(1 - p, 3);
+      const next = a + (target - a) * e;
+      from.current = next;
+      setV(next);
+      if (p < 1) raf = requestAnimationFrame(step);
+    };
+    raf = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(raf);
+  }, [target, ms]);
+  return v;
+}
 
 /** Health factor → status. Thresholds match the lending rules (liquidation below 1.0). */
 export function healthStatus(hf: number | null): { label: string; tone: "positive" | "warning" | "negative" | "neutral" } {
@@ -37,12 +65,15 @@ export function HealthGauge({ hf }: { hf: number | null }) {
     return `M ${x1} ${y1} A ${r} ${r} 0 0 1 ${x2} ${y2}`;
   };
 
-  const marker = hf === null ? null : point(Math.min(hf, MAX));
+  const needle = useTween(hf === null ? 0 : Math.min(hf, MAX));
+  const marker = hf === null ? null : point(needle);
+  const alert = status.tone === "negative" || status.tone === "warning";
 
   return (
     <div className="relative mx-auto w-full max-w-[260px]">
       <svg viewBox="0 0 200 116" className="w-full" role="img" aria-label={`Health factor ${hf === null ? "not applicable" : fmtHealth(hf)}`}>
-        {ZONES.map((z) => (
+        <path d={arc(0.02, MAX - 0.02)} stroke="var(--color-sunken)" strokeWidth={12} fill="none" />
+        {ZONES.map((z, i) => (
           <path
             key={z.from}
             d={arc(z.from + 0.02, z.to - 0.02)}
@@ -51,8 +82,17 @@ export function HealthGauge({ hf }: { hf: number | null }) {
             fill="none"
             strokeLinecap="butt"
             opacity={hf === null ? 0.25 : 0.9}
+            pathLength={1}
+            strokeDasharray="1 1"
+            style={{ animation: `draw 0.7s var(--ease-out) ${i * 0.18}s backwards` }}
           />
         ))}
+        {Array.from({ length: 13 }, (_, i) => {
+          const v = (i / 12) * MAX;
+          const [x1, y1] = point(v, r + 9);
+          const [x2, y2] = point(v, r + (i % 4 === 0 ? 14 : 11.5));
+          return <line key={i} x1={x1} y1={y1} x2={x2} y2={y2} stroke="var(--color-line-strong)" strokeWidth={1} />;
+        })}
         {[1, 2, 3].map((v) => {
           const [x, y] = point(v, r - 20);
           return (
@@ -61,7 +101,10 @@ export function HealthGauge({ hf }: { hf: number | null }) {
             </text>
           );
         })}
-        {marker && <circle cx={marker[0]} cy={marker[1]} r={8} fill="var(--color-surface)" stroke="var(--color-ink)" strokeWidth={3} />}
+        {marker && alert && (
+          <circle cx={marker[0]} cy={marker[1]} r={8} fill={status.tone === "negative" ? "var(--color-negative)" : "var(--color-warning-mark)"} className="animate-live" style={{ transformBox: "fill-box", transformOrigin: "center" }} />
+        )}
+        {marker && <circle cx={marker[0]} cy={marker[1]} r={8} fill="var(--color-surface)" stroke="var(--color-ink)" strokeWidth={3} style={{ filter: "drop-shadow(0 2px 3px rgb(64 46 24 / 0.25))" }} />}
       </svg>
       <div className="absolute inset-x-0 bottom-0 flex flex-col items-center">
         <span
@@ -75,7 +118,9 @@ export function HealthGauge({ hf }: { hf: number | null }) {
         >
           {status.label}
         </span>
-        <span className="tabular text-3xl font-semibold tracking-tight">{fmtHealth(hf)}</span>
+        <span className="display text-[34px] leading-none font-medium">
+          <Ticker value={fmtHealth(hf)} />
+        </span>
       </div>
     </div>
   );

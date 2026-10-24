@@ -4,7 +4,7 @@ import { anvilLocal } from "../../config/chain";
 import { contracts } from "../../config/contracts";
 import { friendlyError } from "../lib/errors";
 import { useToast } from "./Toaster";
-import { Button } from "./ui";
+import { Button, LiveDot } from "./ui";
 
 export function useWrongNetwork() {
   const { isConnected, chainId } = useAccount();
@@ -14,8 +14,8 @@ export function useWrongNetwork() {
 export function NetworkBadge() {
   const wrong = useWrongNetwork();
   return (
-    <span className="hidden h-10 items-center gap-2 rounded-xl border border-line bg-surface px-3 text-sm text-muted sm:inline-flex">
-      <span className={`h-2 w-2 rounded-full ${wrong ? "bg-negative" : "bg-positive"}`} />
+    <span className="hidden h-10 items-center gap-2.5 rounded-xl border border-line bg-surface px-3 text-sm text-muted shadow-[0_1px_2px_rgb(64_46_24/0.05)] sm:inline-flex">
+      <LiveDot tone={wrong ? "negative" : "positive"} />
       {wrong ? "Wrong network" : anvilLocal.name}
     </span>
   );
@@ -28,7 +28,7 @@ export function WrongNetworkBanner() {
   const toast = useToast();
   if (!wrong) return null;
   return (
-    <div className="mb-6 flex flex-col gap-3 rounded-xl border border-negative/30 bg-negative-soft px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+    <div className="mb-6 flex animate-rise flex-col gap-3 rounded-xl border border-negative/30 bg-negative-soft px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
       <p className="flex items-start gap-2 text-sm text-ink">
         <AlertTriangle size={16} className="mt-0.5 shrink-0 text-negative" />
         <span>
@@ -60,7 +60,7 @@ export function ChainStatusBanner() {
 
   if (isError) {
     return (
-      <div className="mb-6 flex items-start gap-2 rounded-xl border border-negative/30 bg-negative-soft px-4 py-3 text-sm text-ink">
+      <div className="mb-6 flex animate-rise items-start gap-2 rounded-xl border border-negative/30 bg-negative-soft px-4 py-3 text-sm text-ink">
         <AlertTriangle size={16} className="mt-0.5 shrink-0 text-negative" />
         <span>
           <b>Can't reach the blockchain at {rpc}.</b> Start it in a WSL terminal with{" "}
@@ -71,7 +71,7 @@ export function ChainStatusBanner() {
   }
   if (isSuccess && (!code || code === "0x")) {
     return (
-      <div className="mb-6 flex items-start gap-2 rounded-xl border border-negative/30 bg-negative-soft px-4 py-3 text-sm text-ink">
+      <div className="mb-6 flex animate-rise items-start gap-2 rounded-xl border border-negative/30 bg-negative-soft px-4 py-3 text-sm text-ink">
         <AlertTriangle size={16} className="mt-0.5 shrink-0 text-negative" />
         <span>
           <b>This chain doesn't have the Modular DeFi contracts</b>, so nothing will show or save. It was probably started with plain{" "}

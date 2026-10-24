@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Area, AreaChart, CartesianGrid, ReferenceDot, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { Skeleton, Tabs } from "../../core/components/ui";
+import { LiveDot, Skeleton, Tabs } from "../../core/components/ui";
+import { TOOLTIP_STYLE } from "../../core/components/AllocationDonut";
 import { fmtUsd } from "../../core/lib/format";
 import { useEthHistory, usePriceHistory, type HistoryRange, type PositionView } from "./hooks";
 
@@ -54,7 +55,8 @@ export function PriceChart({ positions }: { positions: PositionView[] }) {
           onChange={setRange}
           options={(Object.keys(RANGE_SECONDS) as HistoryRange[]).map((r) => ({ value: r, label: r }))}
         />
-        <span className="text-xs text-subtle">
+        <span className="flex items-center gap-2 text-xs text-subtle">
+          <LiveDot />
           {history.data?.sources[range] ? `History: ${history.data.sources[range]}` : "History unavailable"} · Live: on-chain oracle
         </span>
       </div>
@@ -96,8 +98,8 @@ export function PriceChart({ positions }: { positions: PositionView[] }) {
               <Tooltip
                 labelFormatter={(t: number) => fmtTooltipTime(t)}
                 formatter={(v: number) => [fmtUsd(v), "ETH/USD"]}
-                contentStyle={{ borderRadius: 10, border: "1px solid var(--color-line)", fontSize: 12 }}
-                cursor={{ stroke: "var(--color-line-strong)" }}
+                contentStyle={TOOLTIP_STYLE}
+                cursor={{ stroke: "var(--color-line-strong)", strokeDasharray: "3 3" }}
               />
               {entries.map((e) => (
                 <ReferenceLine
@@ -120,6 +122,12 @@ export function PriceChart({ positions }: { positions: PositionView[] }) {
                   />
                 ))}
               <Area type="linear" dataKey="price" stroke="var(--color-accent)" strokeWidth={2} fill="url(#priceFill)" isAnimationActive={false} dot={false} activeDot={{ r: 4, strokeWidth: 2, stroke: "var(--color-surface)" }} />
+              <ReferenceDot
+                x={points[points.length - 1].time}
+                y={points[points.length - 1].price}
+                ifOverflow="extendDomain"
+                shape={(props: { cx?: number; cy?: number }) => <LivePoint cx={props.cx ?? 0} cy={props.cy ?? 0} />}
+              />
             </AreaChart>
           </ResponsiveContainer>
         </div>
@@ -143,6 +151,16 @@ export function PriceChart({ positions }: { positions: PositionView[] }) {
         </div>
       )}
     </div>
+  );
+}
+
+/** Pulsing marker on the most recent price. */
+function LivePoint({ cx, cy }: { cx: number; cy: number }) {
+  return (
+    <g transform={`translate(${cx} ${cy})`}>
+      <circle r={4} fill="var(--color-accent)" className="animate-live" style={{ transformBox: "fill-box", transformOrigin: "center" }} />
+      <circle r={4} fill="var(--color-accent)" stroke="var(--color-surface)" strokeWidth={2} />
+    </g>
   );
 }
 

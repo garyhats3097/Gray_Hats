@@ -4,7 +4,7 @@ import { useAccount } from "wagmi";
 import { contracts, ETH_USD, COLLATERAL_SYMBOL } from "../../config/contracts";
 import { useTx } from "../../core/hooks/useTx";
 import { PageHeader } from "../../core/components/PageHeader";
-import { Badge, Button, Callout, Card, EmptyState, KeyValue, Spinner, Stat, cx } from "../../core/components/ui";
+import { Badge, Button, Callout, Card, EmptyState, KeyValue, Spinner, Stat, cx, Ticker } from "../../core/components/ui";
 import { labelFor } from "../../core/lib/explorer";
 import { fmtTime, fmtUsd, parseAmount, shortAddress } from "../../core/lib/format";
 import { QUOTE_STATUS, useMarketMaker, useMarketMakerHistory, type MMEvent } from "./hooks";
@@ -227,9 +227,17 @@ export default function MarketMakerPage() {
                   { label: "Mid (oracle)", value: q.mid, emphasis: false },
                   { label: "Ask (we sell ETH)", value: q.ask, emphasis: true },
                 ].map((x) => (
-                  <div key={x.label} className={cx("rounded-xl border p-3 sm:p-4", x.emphasis ? "border-line-strong bg-surface" : "border-dashed border-line bg-sunken/40")}>
+                  <div
+                    key={x.label}
+                    className={cx(
+                      "rounded-xl border p-3 transition-[box-shadow,transform,border-color] duration-200 sm:p-4",
+                      x.emphasis ? "border-line-strong bg-surface hover:-translate-y-0.5 hover:shadow-[var(--shadow-raised)]" : "border-dashed border-line bg-sunken/40",
+                    )}
+                  >
                     <p className="text-xs text-muted">{x.label}</p>
-                    <p className="tabular mt-1 text-lg font-semibold sm:text-2xl">{fmtUsd(x.value)}</p>
+                    <p className="display mt-1 text-xl font-medium sm:text-[28px]">
+                      <Ticker value={fmtUsd(x.value)} />
+                    </p>
                   </div>
                 ))}
               </div>

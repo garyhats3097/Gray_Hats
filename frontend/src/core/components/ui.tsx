@@ -1,4 +1,4 @@
-import { forwardRef, type ButtonHTMLAttributes, type ReactNode } from "react";
+import { forwardRef, useEffect, useLayoutEffect, useRef, useState, type ButtonHTMLAttributes, type ReactNode } from "react";
 import { Info, Loader2 } from "lucide-react";
 
 export function cx(...classes: (string | false | null | undefined)[]) {
@@ -23,7 +23,10 @@ export function Card({
   padded?: boolean;
 }) {
   return (
-    <section className={cx("min-w-0 rounded-[var(--radius-card)] border border-line bg-surface shadow-[var(--shadow-card)]", className)}>
+    <section
+      data-titled={title ? "" : undefined}
+      className={cx("card anim-rise min-w-0 rounded-[var(--radius-card)] border border-line bg-surface shadow-[var(--shadow-card)]", className)}
+    >
       {(title || action) && (
         <header className={cx("flex items-center justify-between gap-3", padded ? "px-5 pt-5 sm:px-6" : "px-5 py-4 sm:px-6")}>
           <h2 className="flex items-center gap-1.5 text-[15px] font-semibold text-ink">
@@ -43,12 +46,12 @@ export function Card({
 export function InfoTip({ text }: { text: string }) {
   return (
     <span className="group relative inline-flex">
-      <button type="button" aria-label={text} className="text-subtle hover:text-muted focus:text-muted focus:outline-none">
+      <button type="button" aria-label={text} className="text-subtle transition-colors hover:text-accent focus:text-accent focus:outline-none">
         <Info size={14} />
       </button>
       <span
         role="tooltip"
-        className="pointer-events-none absolute left-1/2 top-full z-30 mt-2 hidden w-56 max-w-[70vw] -translate-x-1/2 rounded-lg bg-ink px-3 py-2 text-xs font-normal leading-relaxed text-white shadow-lg group-hover:block group-focus-within:block"
+        className="pointer-events-none invisible absolute left-1/2 top-full z-30 mt-2 w-56 max-w-[70vw] -translate-x-1/2 translate-y-1 rounded-lg bg-ink px-3 py-2 text-xs font-normal leading-relaxed text-white opacity-0 shadow-[var(--shadow-float)] transition-[opacity,transform,visibility] duration-200 ease-[var(--ease-out)] group-hover:visible group-hover:translate-y-0 group-hover:opacity-100 group-focus-within:visible group-focus-within:translate-y-0 group-focus-within:opacity-100"
       >
         {text}
       </span>
@@ -73,15 +76,19 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
       ref={ref}
       disabled={disabled || loading}
       className={cx(
-        "inline-flex items-center justify-center gap-2 rounded-xl font-medium whitespace-nowrap transition-colors [&_svg]:shrink-0 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:cursor-not-allowed disabled:opacity-50",
+        "inline-flex items-center justify-center gap-2 rounded-xl font-medium whitespace-nowrap transition-[background-color,color,box-shadow,transform,border-color] duration-200 ease-[var(--ease-out)] [&_svg]:shrink-0 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent enabled:active:translate-y-0 enabled:active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50",
         size === "sm" && "h-8 px-3 text-[13px]",
         size === "md" && "h-10 px-4 text-sm",
         size === "lg" && "h-12 px-5 text-[15px]",
-        variant === "primary" && "bg-ink text-white hover:bg-black",
-        variant === "accent" && "bg-accent text-white hover:bg-accent-hover",
-        variant === "secondary" && "border border-line-strong bg-surface text-ink hover:bg-sunken",
+        variant === "primary" &&
+          "bg-ink text-white shadow-[0_1px_0_rgb(255_255_255/0.12)_inset,0_1px_2px_rgb(24_24_27/0.2)] enabled:hover:-translate-y-px enabled:hover:bg-black enabled:hover:shadow-[0_1px_0_rgb(255_255_255/0.12)_inset,0_8px_18px_-8px_rgb(24_24_27/0.55)]",
+        variant === "accent" &&
+          "bg-accent text-white shadow-[0_1px_0_rgb(255_255_255/0.18)_inset,0_1px_2px_rgb(75_75_196/0.3)] enabled:hover:-translate-y-px enabled:hover:bg-accent-hover enabled:hover:shadow-[0_1px_0_rgb(255_255_255/0.18)_inset,0_8px_20px_-8px_rgb(91_91_214/0.7)]",
+        variant === "secondary" &&
+          "border border-line-strong bg-surface text-ink shadow-[0_1px_2px_rgb(64_46_24/0.05)] enabled:hover:-translate-y-px enabled:hover:border-subtle/60 enabled:hover:shadow-[0_6px_14px_-8px_rgb(64_46_24/0.3)]",
         variant === "ghost" && "text-muted hover:bg-sunken hover:text-ink",
-        variant === "danger" && "border border-negative/30 bg-surface text-negative hover:bg-negative-soft",
+        variant === "danger" &&
+          "border border-negative/30 bg-surface text-negative enabled:hover:-translate-y-px enabled:hover:bg-negative-soft enabled:hover:shadow-[0_6px_14px_-8px_rgb(217_61_66/0.45)]",
         className,
       )}
       {...rest}
@@ -106,18 +113,79 @@ export function Badge({
   return (
     <span
       className={cx(
-        "inline-flex items-center gap-1 whitespace-nowrap rounded-full px-2 py-0.5 text-xs font-medium",
-        tone === "neutral" && "bg-sunken text-muted",
-        tone === "accent" && "bg-accent-soft text-accent",
-        tone === "positive" && "bg-positive-soft text-positive",
-        tone === "warning" && "bg-warning-soft text-warning",
-        tone === "negative" && "bg-negative-soft text-negative",
+        "inline-flex items-center gap-1 whitespace-nowrap rounded-full px-2 py-0.5 text-xs font-medium ring-1 ring-inset",
+        tone === "neutral" && "bg-sunken text-muted ring-line-strong/60",
+        tone === "accent" && "bg-accent-soft text-accent ring-accent/15",
+        tone === "positive" && "bg-positive-soft text-positive ring-positive/15",
+        tone === "warning" && "bg-warning-soft text-warning ring-warning/15",
+        tone === "negative" && "bg-negative-soft text-negative ring-negative/15",
         className,
       )}
     >
       {children}
     </span>
   );
+}
+
+// ---------------------------------------------------------------- Ticker
+
+/** Parses the number out of a formatted string ("-$1,234.50" → -1234.5). */
+function numericValue(v: string): number | null {
+  const n = Number(v.replace(/[^0-9.-]/g, ""));
+  return /\d/.test(v) && Number.isFinite(n) ? n : null;
+}
+
+/**
+ * Renders a formatted value with each digit rolling to its place, like a split-flap board.
+ * Digits are keyed from the right so "$9.99" → "$10.00" rolls instead of re-mounting.
+ */
+export function Ticker({ value }: { value: string }) {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    const id = requestAnimationFrame(() => setMounted(true));
+    return () => cancelAnimationFrame(id);
+  }, []);
+  const chars = value.split("");
+  return (
+    <span className="ticker">
+      <span className="sr-only">{value}</span>
+      {chars.map((c, i) => {
+        const key = chars.length - i;
+        if (!/\d/.test(c))
+          return (
+            <span key={`${key}${c}`} aria-hidden>
+              {c}
+            </span>
+          );
+        return (
+          <span key={key} className="ticker-digit" aria-hidden>
+            <span style={{ transform: `translateY(${mounted ? -Number(c) * 10 : 0}%)` }}>
+              {DIGITS.map((d) => (
+                <span key={d}>{d}</span>
+              ))}
+            </span>
+          </span>
+        );
+      })}
+    </span>
+  );
+}
+const DIGITS = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"];
+
+/** Returns "flash-up" / "flash-down" briefly after a numeric string changes. */
+export function useFlash(value: unknown) {
+  const prev = useRef(value);
+  const [flash, setFlash] = useState<"" | "flash-up" | "flash-down">("");
+  useEffect(() => {
+    const before = typeof prev.current === "string" ? numericValue(prev.current) : null;
+    const after = typeof value === "string" ? numericValue(value) : null;
+    prev.current = value;
+    if (before === null || after === null || before === after) return;
+    setFlash(after > before ? "flash-up" : "flash-down");
+    const t = setTimeout(() => setFlash(""), 1200);
+    return () => clearTimeout(t);
+  }, [value]);
+  return flash;
 }
 
 // ------------------------------------------------------------------ Stat
@@ -137,6 +205,7 @@ export function Stat({
   tone?: "positive" | "negative";
   loading?: boolean;
 }) {
+  const flash = useFlash(value);
   return (
     <div className="min-w-0">
       <div className="flex items-center gap-1.5 text-[13px] text-muted">
@@ -148,12 +217,13 @@ export function Stat({
       ) : (
         <div
           className={cx(
-            "tabular mt-1 truncate text-2xl font-semibold tracking-tight",
+            "display -mx-1 mt-1 inline-block max-w-full truncate rounded-md px-1 text-[23px] leading-tight font-medium sm:text-[28px]",
             tone === "positive" && "text-positive",
             tone === "negative" && "text-negative",
+            flash,
           )}
         >
-          {value}
+          {typeof value === "string" ? <Ticker value={value} /> : value}
         </div>
       )}
       {sub && <div className="mt-0.5 text-xs text-subtle">{sub}</div>}
@@ -163,16 +233,29 @@ export function Stat({
 
 export function StatCard(props: Parameters<typeof Stat>[0]) {
   return (
-    <div className="min-w-0 rounded-[var(--radius-card)] border border-line bg-surface p-5 shadow-[var(--shadow-card)]">
+    <div className="card anim-rise min-w-0 rounded-[var(--radius-card)] border border-line bg-surface p-5 shadow-[var(--shadow-card)]">
       <Stat {...props} />
     </div>
+  );
+}
+
+// -------------------------------------------------------------- LiveDot
+
+/** Small pulsing dot that signals a value is streaming from the chain. */
+export function LiveDot({ tone = "positive" }: { tone?: "positive" | "negative" | "accent" }) {
+  const color = tone === "positive" ? "bg-positive" : tone === "negative" ? "bg-negative" : "bg-accent";
+  return (
+    <span className="relative inline-flex h-2 w-2 shrink-0" aria-hidden>
+      <span className={cx("absolute inset-0 animate-live rounded-full", color)} />
+      <span className={cx("relative h-2 w-2 rounded-full", color)} />
+    </span>
   );
 }
 
 // ------------------------------------------------------------- Skeleton
 
 export function Skeleton({ className }: { className?: string }) {
-  return <div className={cx("animate-pulse rounded-md bg-sunken", className)} />;
+  return <div className={cx("skeleton rounded-md", className)} />;
 }
 
 export function Spinner({ label }: { label?: string }) {
@@ -198,11 +281,18 @@ export function EmptyState({
   action?: ReactNode;
 }) {
   return (
-    <div className="flex flex-col items-center px-6 py-10 text-center">
-      {icon && <div className="mb-3 flex h-11 w-11 items-center justify-center rounded-full bg-sunken text-muted">{icon}</div>}
+    <div className="flex animate-fade flex-col items-center px-6 py-10 text-center">
+      {icon && (
+        <div className="relative mb-4 flex h-12 w-12 items-center justify-center">
+          <span className="absolute inset-0 rounded-full border border-dashed border-line-strong" />
+          <span className="flex h-9 w-9 animate-float items-center justify-center rounded-full bg-surface text-muted shadow-[var(--shadow-card)] ring-1 ring-line">
+            {icon}
+          </span>
+        </div>
+      )}
       <p className="text-sm font-medium text-ink">{title}</p>
-      {body && <p className="mt-1 max-w-sm text-[13px] text-muted">{body}</p>}
-      {action && <div className="mt-4">{action}</div>}
+      {body && <p className="mt-1 max-w-sm text-[13px] leading-relaxed text-muted">{body}</p>}
+      {action && <div className="mt-5">{action}</div>}
     </div>
   );
 }
@@ -221,11 +311,11 @@ export function Callout({
   return (
     <div
       className={cx(
-        "flex gap-2.5 rounded-xl px-3.5 py-3 text-[13px] leading-relaxed",
-        tone === "neutral" && "bg-sunken text-muted",
-        tone === "accent" && "bg-accent-soft text-ink",
-        tone === "warning" && "bg-warning-soft text-ink",
-        tone === "negative" && "bg-negative-soft text-ink",
+        "flex animate-fade gap-2.5 rounded-xl border-l-2 px-3.5 py-3 text-[13px] leading-relaxed",
+        tone === "neutral" && "border-line-strong bg-sunken text-muted",
+        tone === "accent" && "border-accent bg-accent-soft text-ink",
+        tone === "warning" && "border-warning-mark bg-warning-soft text-ink",
+        tone === "negative" && "border-negative bg-negative-soft text-ink",
       )}
     >
       {icon && <span className="mt-0.5 shrink-0">{icon}</span>}
@@ -236,6 +326,23 @@ export function Callout({
 
 // ----------------------------------------------------------------- Tabs
 
+/** Measures the selected child so a pill can slide under it. */
+export function useIndicator<T>(value: T) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [box, setBox] = useState<{ left: number; width: number } | null>(null);
+  useLayoutEffect(() => {
+    const measure = () => {
+      const el = ref.current?.querySelector<HTMLElement>("[aria-selected=true]");
+      if (el) setBox({ left: el.offsetLeft, width: el.offsetWidth });
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    if (ref.current) ro.observe(ref.current);
+    return () => ro.disconnect();
+  }, [value]);
+  return { ref, box };
+}
+
 export function Tabs<T extends string>({
   value,
   onChange,
@@ -245,8 +352,16 @@ export function Tabs<T extends string>({
   onChange: (v: T) => void;
   options: { value: T; label: string }[];
 }) {
+  const { ref, box } = useIndicator(value);
   return (
-    <div role="tablist" className="inline-flex rounded-xl bg-sunken p-1">
+    <div ref={ref} role="tablist" className="relative inline-flex rounded-xl bg-sunken p-1 ring-1 ring-line ring-inset">
+      {box && (
+        <span
+          aria-hidden
+          className="absolute top-1 bottom-1 rounded-lg bg-surface shadow-[0_1px_2px_rgb(64_46_24/0.1),0_2px_6px_-2px_rgb(64_46_24/0.12)] transition-[left,width] duration-300 ease-[var(--ease-out)]"
+          style={{ left: box.left, width: box.width }}
+        />
+      )}
       {options.map((o) => (
         <button
           key={o.value}
@@ -254,8 +369,8 @@ export function Tabs<T extends string>({
           aria-selected={value === o.value}
           onClick={() => onChange(o.value)}
           className={cx(
-            "rounded-lg px-3.5 py-1.5 text-[13px] font-medium transition-colors",
-            value === o.value ? "bg-surface text-ink shadow-sm" : "text-muted hover:text-ink",
+            "relative rounded-lg px-3.5 py-1.5 text-[13px] font-medium transition-colors duration-200",
+            value === o.value ? "text-ink" : "text-muted hover:text-ink",
           )}
         >
           {o.label}

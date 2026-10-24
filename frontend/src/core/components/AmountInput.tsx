@@ -26,8 +26,10 @@ export function AmountInput({
       <label className="mb-1.5 block text-[13px] font-medium text-muted">{label}</label>
       <div
         className={cx(
-          "flex items-center gap-2 rounded-xl border bg-surface px-3.5 py-2.5 transition-colors focus-within:border-accent focus-within:ring-2 focus-within:ring-accent/15",
-          error ? "border-negative/60" : "border-line-strong",
+          "flex items-center gap-2 rounded-xl border bg-surface px-3.5 py-2.5 shadow-[0_1px_2px_rgb(64_46_24/0.04)_inset] transition-[border-color,box-shadow] duration-200",
+          error
+            ? "border-negative/60 focus-within:shadow-[0_0_0_4px_rgb(217_61_66/0.12)]"
+            : "border-line-strong hover:border-subtle/70 focus-within:border-accent focus-within:shadow-[0_0_0_4px_rgb(91_91_214/0.14)]",
         )}
       >
         <input
@@ -39,7 +41,7 @@ export function AmountInput({
             const v = e.target.value.replace(",", ".");
             if (/^\d*\.?\d{0,18}$/.test(v)) onChange(v);
           }}
-          className="tabular min-w-0 flex-1 bg-transparent text-xl font-semibold outline-none placeholder:text-subtle disabled:opacity-60"
+          className="display w-0 min-w-0 flex-1 bg-transparent text-2xl font-medium outline-none placeholder:text-line-strong disabled:opacity-60"
         />
         <span className="text-sm font-medium text-muted">{symbol}</span>
         {max !== undefined && (
@@ -47,14 +49,14 @@ export function AmountInput({
             type="button"
             disabled={disabled || max === 0n}
             onClick={() => onChange(trimZeros(max))}
-            className="rounded-md px-2 py-1 text-xs font-semibold text-accent hover:bg-accent-soft disabled:opacity-40"
+            className="rounded-md border border-accent/20 px-2 py-1 text-[11px] font-semibold tracking-wider text-accent transition-colors hover:bg-accent hover:text-white disabled:pointer-events-none disabled:opacity-40"
           >
             MAX
           </button>
         )}
       </div>
       <div className="mt-1.5 flex justify-between text-xs">
-        <span className="text-negative">{error}</span>
+        <span key={error ?? ""} className={cx("text-negative", error && "animate-fade")}>{error}</span>
         {max !== undefined && (
           <span className="tabular text-subtle">
             {maxLabel}: {fmtAmount(max)} {symbol}

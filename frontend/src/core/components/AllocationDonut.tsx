@@ -2,6 +2,13 @@ import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
 import { fmtUsd, toNumber } from "../lib/format";
 import type { AllocationSegment } from "./AllocationBar";
 
+export const TOOLTIP_STYLE = {
+  borderRadius: 10,
+  border: "1px solid var(--color-line)",
+  fontSize: 12,
+  boxShadow: "var(--shadow-float)",
+};
+
 /** Donut of the same allocation, with the total in the middle (as in the reference design). */
 export function AllocationDonut({
   segments,
@@ -29,7 +36,8 @@ export function AllocationDonut({
             strokeWidth={2}
             startAngle={90}
             endAngle={-270}
-            isAnimationActive={false}
+            animationDuration={700}
+            animationEasing="ease-out"
           >
             {(empty ? [{ color: "var(--color-sunken)" }] : data).map((d, i) => (
               <Cell key={i} fill={d.color} />
@@ -38,14 +46,14 @@ export function AllocationDonut({
           {!empty && (
             <Tooltip
               formatter={(v: number, name: string) => [fmtUsd(v), name]}
-              contentStyle={{ borderRadius: 10, border: "1px solid var(--color-line)", fontSize: 12 }}
+              contentStyle={TOOLTIP_STYLE}
             />
           )}
         </PieChart>
       </ResponsiveContainer>
       <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
         <span className="text-xs text-muted">{centerLabel}</span>
-        <span className="tabular text-xl font-semibold">{centerValue}</span>
+        <span className="display text-[26px] leading-tight font-medium">{centerValue}</span>
       </div>
     </div>
   );

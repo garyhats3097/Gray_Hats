@@ -1,10 +1,10 @@
-import { useState } from "react";
+import { useState, type CSSProperties } from "react";
 import { AlertTriangle, TrendingDown, TrendingUp } from "lucide-react";
 import { contracts, ETH_USD, COLLATERAL_SYMBOL } from "../../config/contracts";
 import { useAccountState } from "../../core/hooks/useAccountState";
 import { useTx } from "../../core/hooks/useTx";
 import { AmountInput } from "../../core/components/AmountInput";
-import { Button, Callout, KeyValue, cx } from "../../core/components/ui";
+import { Button, Callout, KeyValue, cx, useIndicator } from "../../core/components/ui";
 import { fmtUsd, parseAmount } from "../../core/lib/format";
 import { MAX_LEVERAGE, MIN_SIZE, maxSizeFor, quote, useMarkPrice } from "./hooks";
 
@@ -28,6 +28,7 @@ export function TradePanel() {
   else if (size !== null && q.total > s.free) error = "Not enough available collateral";
 
   const ready = size !== null && !error && !unavailable && !busy;
+  const side = useIndicator(isLong);
 
   async function open() {
     if (size === null) return;
@@ -41,18 +42,25 @@ export function TradePanel() {
 
   return (
     <div className="space-y-5">
-      <div className="grid grid-cols-2 gap-1 rounded-xl bg-sunken p-1">
+      <div ref={side.ref} className="relative grid grid-cols-2 gap-1 rounded-xl bg-sunken p-1 ring-1 ring-line ring-inset">
+        {side.box && (
+          <span
+            aria-hidden
+            className={cx(
+              "absolute top-1 bottom-1 rounded-lg transition-[left,background-color,box-shadow] duration-300 ease-[var(--ease-out)]",
+              isLong ? "bg-positive shadow-[0_6px_14px_-6px_rgb(15_138_124/0.6)]" : "bg-negative shadow-[0_6px_14px_-6px_rgb(217_61_66/0.6)]",
+            )}
+            style={{ left: side.box.left, width: side.box.width }}
+          />
+        )}
         {[true, false].map((long) => (
           <button
             key={String(long)}
+            aria-selected={isLong === long}
             onClick={() => setIsLong(long)}
             className={cx(
-              "flex items-center justify-center gap-1.5 rounded-lg py-2 text-sm font-semibold transition-colors",
-              isLong === long
-                ? long
-                  ? "bg-positive text-white shadow-sm"
-                  : "bg-negative text-white shadow-sm"
-                : "text-muted hover:text-ink",
+              "relative flex items-center justify-center gap-1.5 rounded-lg py-2 text-sm font-semibold transition-colors duration-200",
+              isLong === long ? "text-white" : "text-muted hover:text-ink",
             )}
           >
             {long ? <TrendingUp size={16} /> : <TrendingDown size={16} />}
@@ -80,7 +88,7 @@ export function TradePanel() {
       <div>
         <div className="mb-2 flex items-center justify-between text-[13px]">
           <span className="font-medium text-muted">Leverage</span>
-          <span className="tabular rounded-md bg-sunken px-2 py-0.5 font-semibold">{leverage}x</span>
+          <span key={leverage} className="tabular animate-pop rounded-md bg-ink px-2 py-0.5 font-semibold text-white">{leverage}x</span>
         </div>
         <input
           type="range"
@@ -89,12 +97,13 @@ export function TradePanel() {
           step={1}
           value={leverage}
           onChange={(e) => setLeverage(Number(e.target.value))}
-          className="w-full accent-[var(--color-accent)]"
+          className="range w-full"
+          style={{ "--fill": `${((leverage - 1) / (MAX_LEVERAGE - 1)) * 100}%` } as CSSProperties}
           aria-label="Leverage"
         />
         <div className="mt-1 flex justify-between">
           {LEVERAGE_MARKS.map((m) => (
-            <button key={m} onClick={() => setLeverage(m)} className={cx("text-xs", leverage === m ? "font-semibold text-accent" : "text-subtle hover:text-ink")}>
+            <button key={m} onClick={() => setLeverage(m)} className={cx("rounded px-1 text-xs transition-colors", leverage === m ? "font-semibold text-accent" : "text-subtle hover:bg-sunken hover:text-ink")}>
               {m}x
             </button>
           ))}
@@ -124,7 +133,12 @@ export function TradePanel() {
       )}
 
       <Button
-        className={cx("w-full", isLong ? "!bg-positive hover:!bg-positive/90" : "!bg-negative hover:!bg-negative/90")}
+        className={cx(
+          "w-full",
+          isLong
+            ? "!bg-positive enabled:hover:!bg-positive/90 enabled:hover:!shadow-[0_10px_22px_-10px_rgb(15_138_124/0.8)]"
+            : "!bg-negative enabled:hover:!bg-negative/90 enabled:hover:!shadow-[0_10px_22px_-10px_rgb(217_61_66/0.8)]",
+        )}
         size="lg"
         disabled={!ready}
         loading={busy}
