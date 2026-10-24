@@ -21,6 +21,10 @@ cd ~/Gray_Hats
 # Terminal 2 — the app
 cd ~/Gray_Hats/frontend
 npm run dev                   # http://localhost:5173
+
+# Terminal 3 — help chatbot (needs chatbot/.env with a free key, see CHATBOT.md)
+cd ~/Gray_Hats/chatbot
+npm start
 ```
 
 In MetaMask:
@@ -118,6 +122,13 @@ In MetaMask:
 
 ---
 
+## Act 8 — Help assistant (1 min, optional)
+
+1. Click the blue chat bubble (bottom-right) on **Lending** → suggestion **"Why can't I borrow more?"**.
+   It answers with *your* numbers (tier, limit, debt), read from the chain.
+2. Ask "Any ETH news today?" — it says it has no live news and links trusted sources instead of
+   inventing headlines.
+
 ## Closing (30 s)
 
 > "One core, multiple financial products: one deposit, one ledger, real market prices, and a
@@ -147,3 +158,4 @@ Then point to [`LIMITATIONS.md`](LIMITATIONS.md).
 | Trading fails with "oracle price is out of date" | The feed stopped for 15+ minutes. Restart with `./scripts/start-chain.sh` |
 | "Nonce too high" or stuck transactions | MetaMask → Settings → Advanced → Clear activity tab data |
 | Red "can't reach the blockchain" banner | The chain isn't running: `./scripts/start-chain.sh` |
+| Chat says "The assistant isn't running" | `cd chatbot && npm start` (see CHATBOT.md) |

@@ -8,7 +8,7 @@ A local prototype: one shared collateral vault (`CoreVault`) with independent mo
 > ⚠️ Prototype only. Mock tokens, mock oracle, local Anvil chain. Not audited. Never deploy to mainnet.
 > See [docs/LIMITATIONS.md](docs/LIMITATIONS.md).
 
-**Docs:** [Accounting model](docs/ACCOUNTING.md) · [Credit & undercollateralized lending](docs/CREDIT.md) · [Market Maker](docs/MARKET_MAKER.md) · [Demo script](docs/DEMO_SCRIPT.md) · [Limitations](docs/LIMITATIONS.md)
+**Docs:** [Accounting model](docs/ACCOUNTING.md) · [Credit & undercollateralized lending](docs/CREDIT.md) · [Market Maker](docs/MARKET_MAKER.md) · [Chatbot](docs/CHATBOT.md) · [Demo script](docs/DEMO_SCRIPT.md) · [Limitations](docs/LIMITATIONS.md)
 
 ## Repository layout
 ```
@@ -24,6 +24,7 @@ frontend/    React + TypeScript + Vite + wagmi/viem + Tailwind
   src/modules.ts   list of mounted modules (sidebar + routes)
   src/pages/       Portfolio, Vault, Activity, Explorer, Help
   src/config/      chain, contract addresses (auto-written) and ABIs (generated)
+chatbot/     help assistant server (free Gemini/Groq key in chatbot/.env) + knowledge/site-guide.md
 scripts/     start-chain.sh / reset-chain.sh (saved local chain), price-feed.mjs (real ETH price, started automatically)
 docs/        ACCOUNTING.md, DEMO_SCRIPT.md, LIMITATIONS.md
 ```
@@ -58,6 +59,11 @@ Two terminals, both inside WSL on Windows.
 cd frontend
 npm install        # first time only
 npm run dev        # open http://localhost:5173
+
+# Terminal 3 — help chatbot (optional; needs a free key, see docs/CHATBOT.md)
+cd chatbot
+cp .env.example .env   # first time: paste your free Gemini key into .env
+npm start
 ```
 Then set up MetaMask as described on the app's **Help & Setup** page: add the network
 `http://127.0.0.1:8545`, chain ID `31337`, and import Anvil test account #1.
