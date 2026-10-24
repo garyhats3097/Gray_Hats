@@ -67,13 +67,18 @@ async function spotPrice() {
   return undefined;
 }
 
-/** Real price history for one range as [[unixSeconds, price], ...] oldest first. */
+/**
+ * Real price history for one range, oldest first, as [unixSeconds, close, open, high, low] candles.
+ * CoinGecko only has prices, so its points are just [unixSeconds, price].
+ */
 async function history(range) {
   const cfg = RANGES[range];
   const since = Date.now() / 1000 - cfg.seconds;
   const sources = [
-    ["Coinbase", async () => (await getJson(URL_.cbCandles.replace("{g}", cfg.coinbase))).map((c) => [c[0], c[4]])],
-    ["Kraken", async () => Object.values((await getJson(URL_.krOhlc.replace("{i}", cfg.kraken))).result).find(Array.isArray).map((c) => [c[0], Number(c[4])])],
+    // Coinbase candle: [time, low, high, open, close, volume]
+    ["Coinbase", async () => (await getJson(URL_.cbCandles.replace("{g}", cfg.coinbase))).map((c) => [c[0], c[4], c[3], c[2], c[1]])],
+    // Kraken candle: [time, open, high, low, close, vwap, volume, count] (prices as strings)
+    ["Kraken", async () => Object.values((await getJson(URL_.krOhlc.replace("{i}", cfg.kraken))).result).find(Array.isArray).map((c) => [c[0], Number(c[4]), Number(c[1]), Number(c[2]), Number(c[3])])],
     ["CoinGecko", async () => (await getJson(URL_.cgChart.replace("{d}", cfg.gecko))).prices.map(([ms, p]) => [Math.floor(ms / 1000), p])],
   ];
   for (const [name, fn] of sources) {

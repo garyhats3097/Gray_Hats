@@ -135,6 +135,8 @@ These are the most important limitations. In this prototype the admin and the mo
   always re-check everything, so a stale preview can mislead but cannot break accounting.
 - **Price history** comes from public APIs and is saved to `frontend/public/eth-history.json` by
   the feed. Without internet, the chart only shows on-chain prices and no new chain can start.
+  Candle views use real open/high/low/close from Coinbase or Kraken. CoinGecko and the live
+  oracle only give single prices, so candles built from them have small or flat wicks.
 - **Lending liquidation through interest takes years** at 5% APR on real time, so it can't be
   shown live in a demo any more (there is no time travel).
 - **One network** (Anvil, chain 31337). Contract addresses come from `deployments.json`.

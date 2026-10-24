@@ -361,7 +361,7 @@ export function Tabs<T extends string>({
 }: {
   value: T;
   onChange: (v: T) => void;
-  options: { value: T; label: string }[];
+  options: { value: T; label: ReactNode; title?: string }[];
 }) {
   const { ref, box } = useIndicator(value);
   return (
@@ -378,6 +378,8 @@ export function Tabs<T extends string>({
           key={o.value}
           role="tab"
           aria-selected={value === o.value}
+          title={o.title}
+          aria-label={o.title}
           onClick={() => onChange(o.value)}
           className={cx(
             "relative rounded-lg px-3.5 py-1.5 text-[13px] font-medium transition-colors duration-200",
