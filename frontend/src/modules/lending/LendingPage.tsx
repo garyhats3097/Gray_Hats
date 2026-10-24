@@ -62,7 +62,7 @@ export default function LendingPage() {
     <>
       <PageHeader
         title="Lending"
-        subtitle="Borrow against collateral from the shared vault: 75% by default, and up to 120% — more than your collateral — with a strong on-chain credit history."
+        subtitle="Borrow against collateral from the shared vault. Your on-chain credit tier sets the limit: 75% of collateral for new users (Standard), up to 120% — more than your collateral — at Prime."
       />
 
       {s.healthFactor !== null && s.healthFactor < 1.25 && (

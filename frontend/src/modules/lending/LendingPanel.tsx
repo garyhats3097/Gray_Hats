@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { Modal } from "../../core/components/Modal";
+import { VaultForm } from "../../core/components/VaultForm";
 import { AlertTriangle, ArrowRight, Info } from "lucide-react";
 import { Link } from "react-router-dom";
 import { maxUint256 } from "viem";
@@ -30,6 +32,7 @@ export function LendingPanel() {
   const { send, busy } = useTx();
   const [action, setAction] = useState<Action>("supply");
   const [input, setInput] = useState("");
+  const [depositOpen, setDepositOpen] = useState(false);
 
   const amount = parseAmount(input);
   const col = s.lendingCollateral;
@@ -62,7 +65,7 @@ export function LendingPanel() {
       borrow:
         poolLiquidity !== undefined && amount > poolLiquidity
           ? "Not enough liquidity in the pool"
-          : `Exceeds your borrowing capacity (${TIERS[c.terms?.tier ?? 0].name} tier)`,
+          : `Over your limit: ${TIERS[c.terms?.tier ?? 0].ltvPct}% of collateral for the ${TIERS[c.terms?.tier ?? 0].name} tier. A higher credit tier lets you borrow more.`,
       repay: amount > debt ? `More than you owe (${fmtUsd(debt)})` : "Exceeds your wallet balance",
       withdraw: "That collateral is backing your loan. Repay first.",
     }[action];
@@ -119,7 +122,16 @@ export function LendingPanel() {
 
   // When an action can't be used yet, say why and point to the step that comes first.
   const blocked: Record<Action, { message: string; go?: Action; vault?: boolean } | null> = {
-    supply: s.free === 0n ? { message: "You have no available collateral in the vault. Deposit mUSDC first.", vault: true } : null,
+    supply:
+      s.free === 0n
+        ? {
+            message:
+              s.deposits > 0n
+                ? `All ${fmtUsd(s.deposits)} in the shared vault is already in use (${fmtUsd(s.totalLocked)} locked by modules). Your wallet has ${fmtUsd(s.walletBalance)} that is not in the vault yet: deposit some, then allocate it here.`
+                : `Nothing is deposited in the shared vault yet. Your wallet has ${fmtUsd(s.walletBalance)}: deposit some, then allocate it here.`,
+            vault: true,
+          }
+        : null,
     borrow: col === 0n ? { message: `Allocate collateral to Lending first. Your ${TIERS[c.terms?.tier ?? 0].name} tier lets you borrow up to ${TIERS[c.terms?.tier ?? 0].ltvPct}% of it.`, go: "supply" } : null,
     repay: debt === 0n ? { message: "You don't have a loan to repay. Borrow first, then come back here to pay it back.", go: "borrow" } : null,
     withdraw: col === 0n ? { message: "No collateral is allocated to Lending, so there is nothing to release.", go: "supply" } : null,
@@ -129,8 +141,15 @@ export function LendingPanel() {
   return (
     <div className="space-y-5">
       <Tabs value={action} onChange={switchTo} options={(Object.keys(labels) as Action[]).map((k) => ({ value: k, label: labels[k] }))} />
-      <p className="tabular text-[13px] text-muted">
-        Available in the shared vault: <b className="text-ink">{fmtUsd(s.free)}</b>
+      <p className="tabular flex flex-wrap items-center justify-between gap-2 text-[13px] text-muted">
+        <span>
+          Available in the shared vault: <b className="text-ink">{fmtUsd(s.free)}</b>
+        </span>
+        {s.walletBalance > 0n && !block?.vault && (
+          <button onClick={() => setDepositOpen(true)} className="text-[13px] font-medium text-accent hover:underline">
+            Deposit from wallet
+          </button>
+        )}
       </p>
 
       {block ? (
@@ -141,17 +160,28 @@ export function LendingPanel() {
               Go to {labels[block.go]}
             </Button>
           )}
-          {block.vault && (
-            <Link to="/vault" className="block">
-              <Button className="w-full" variant="secondary">
-                Go to Shared Vault
+          {block.vault &&
+            (s.walletBalance > 0n ? (
+              <Button className="w-full" onClick={() => setDepositOpen(true)}>
+                Deposit from wallet
               </Button>
-            </Link>
-          )}
+            ) : (
+              <Link to="/vault" className="block">
+                <Button className="w-full" variant="secondary">
+                  Go to Shared Vault (get test mUSDC)
+                </Button>
+              </Link>
+            ))}
         </div>
       ) : (
         <div key={action} className="animate-fade space-y-5">
           <AmountInput label={inputLabel[action]} value={input} onChange={setInput} max={max} maxLabel={maxLabel[action]} symbol={COLLATERAL_SYMBOL} error={error} disabled={busy} />
+          {action === "borrow" && c.terms && (
+            <p className="-mt-2 text-xs text-muted">
+              Your limit: <b className="text-ink">{TIERS[c.terms.tier].ltvPct}% of collateral</b> ({TIERS[c.terms.tier].name} tier, score {String(c.terms.score)}).
+              {c.terms.tier < 3 && ` Up to 120% unlocks at Prime (85 points) — see Credit profile.`}
+            </p>
+          )}
 
           <div className="divide-y divide-line rounded-xl bg-sunken/60 px-3.5">
             <div className="py-2.5 text-[13px]">
@@ -192,6 +222,10 @@ export function LendingPanel() {
           </Button>
         </div>
       )}
+      <Modal open={depositOpen} onClose={() => setDepositOpen(false)} title="Deposit into the shared vault">
+        <p className="mb-4 text-[13px] text-muted">Move mUSDC from your wallet into the shared vault. Then allocate it to Lending.</p>
+        <VaultForm onDone={() => setDepositOpen(false)} />
+      </Modal>
     </div>
   );
 }
