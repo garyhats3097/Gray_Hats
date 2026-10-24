@@ -110,22 +110,59 @@ ${JSON.stringify(context ?? { wallet: "not connected" }, null, 2)}
 // ------------------------------------------------------------------ AI providers
 
 class ChatError extends Error {
-  constructor(status, message) {
+  /** retry: worth trying again or with another model (busy, quota, model missing) */
+  constructor(status, message, retry = false) {
     super(message);
     this.status = status;
+    this.retry = retry;
   }
 }
 
-function explainHttpError(status, detail) {
-  if (status === 429) return new ChatError(429, "The free AI quota is used up for now. Wait a minute and try again.");
-  if (status === 400 && /api key/i.test(detail)) return new ChatError(500, `The AI key is invalid. Check ${P.keyName} in chatbot/.env.`);
-  if (status === 401 || status === 403) return new ChatError(500, `The AI key was refused. Check ${P.keyName} in chatbot/.env.`);
-  if (status === 404) return new ChatError(500, `AI model "${P.model}" was not found. Set another model in chatbot/.env (see .env.example).`);
-  return new ChatError(502, `The AI service returned an error (${status}).`);
+/** The provider's own error text, e.g. Google's {"error":{"message":"The model is overloaded..."}}. */
+function providerMessage(body) {
+  try {
+    return JSON.parse(body).error?.message ?? "";
+  } catch {
+    return "";
+  }
 }
 
-async function askGemini(system, messages) {
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(P.model)}:generateContent`;
+function explainHttpError(status, body, model) {
+  const detail = providerMessage(body);
+  console.error(`[chat] ${model}: HTTP ${status}${detail ? ` — ${detail}` : ""}`);
+  if (status === 429) return new ChatError(429, "The free AI quota is used up for now. Wait a minute and try again.", true);
+  if (status === 400 && /api key/i.test(detail)) return new ChatError(500, `The AI key is invalid. Check ${P.keyName} in chatbot/.env.`);
+  if (status === 401 || status === 403) return new ChatError(500, `The AI key was refused. Check ${P.keyName} in chatbot/.env.`);
+  if (status === 404) return new ChatError(500, `AI model "${model}" was not found. Set another model in chatbot/.env (see .env.example).`, true);
+  if (status === 500 || status === 503) return new ChatError(503, "The free AI service is busy right now. Try again in a minute.", true);
+  return new ChatError(502, `The AI service returned an error (${status})${detail ? `: ${detail}` : ""}.`);
+}
+
+/** The configured Gemini model first, then other free models if it is busy or missing. */
+const GEMINI_MODELS = [
+  ...new Set([P.model, ...(process.env.GEMINI_FALLBACK_MODELS ?? "gemini-2.5-flash,gemini-2.5-flash-lite").split(",")].map((m) => m.trim()).filter(Boolean)),
+];
+
+async function askGeminiWithFallback(system, messages) {
+  let lastError;
+  for (const model of GEMINI_MODELS) {
+    // A busy model often answers on a second try a moment later.
+    for (let attempt = 0; attempt < 2; attempt++) {
+      try {
+        return await askGemini(model, system, messages);
+      } catch (e) {
+        lastError = e;
+        if (!(e instanceof ChatError) || !e.retry) throw e;
+        if (e.status !== 503) break; // quota or missing model: go straight to the next model
+        await new Promise((r) => setTimeout(r, 1500));
+      }
+    }
+  }
+  throw lastError;
+}
+
+async function askGemini(model, system, messages) {
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`;
   const res = await fetch(url, {
     method: "POST",
     headers: { "content-type": "application/json", "x-goog-api-key": P.key },
@@ -137,7 +174,7 @@ async function askGemini(system, messages) {
     }),
   });
   const body = await res.text();
-  if (!res.ok) throw explainHttpError(res.status, body);
+  if (!res.ok) throw explainHttpError(res.status, body, model);
   const data = JSON.parse(body);
   const candidate = data.candidates?.[0];
   const text = candidate?.content?.parts?.map((p) => p.text ?? "").join("").trim();
@@ -161,7 +198,7 @@ async function askGroq(system, messages) {
     }),
   });
   const body = await res.text();
-  if (!res.ok) throw explainHttpError(res.status, body);
+  if (!res.ok) throw explainHttpError(res.status, body, P.model);
   const text = JSON.parse(body).choices?.[0]?.message?.content?.trim();
   if (!text) throw new ChatError(502, "The AI gave no answer. Try rephrasing the question.");
   return text;
@@ -171,7 +208,7 @@ export async function answer(messages, context) {
   if (!P.key) throw new ChatError(503, `The assistant has no AI key yet. Put ${P.keyName}=... in chatbot/.env (free key: ${P.keyUrl}) and restart it.`);
   const system = systemPrompt(context);
   try {
-    return PROVIDER === "groq" ? await askGroq(system, messages) : await askGemini(system, messages);
+    return PROVIDER === "groq" ? await askGroq(system, messages) : await askGeminiWithFallback(system, messages);
   } catch (e) {
     if (e instanceof ChatError) throw e;
     if (e?.name === "TimeoutError") throw new ChatError(504, "The AI took too long to answer. Try again.");
