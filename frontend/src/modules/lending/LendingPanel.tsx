@@ -140,7 +140,7 @@ export function LendingPanel() {
 
   return (
     <div className="space-y-5">
-      <Tabs value={action} onChange={switchTo} options={(Object.keys(labels) as Action[]).map((k) => ({ value: k, label: labels[k] }))} />
+      <Tabs fill value={action} onChange={switchTo} options={(Object.keys(labels) as Action[]).map((k) => ({ value: k, label: labels[k] }))} />
       <p className="tabular flex flex-wrap items-center justify-between gap-2 text-[13px] text-muted">
         <span>
           Available in the shared vault: <b className="text-ink">{fmtUsd(s.free)}</b>

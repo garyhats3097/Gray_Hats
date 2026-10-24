@@ -114,8 +114,9 @@ export default function LendingPage() {
         <StatCard tint="var(--color-accent)" label="Pool liquidity" value={poolLiquidity === undefined ? "—" : fmtUsd(poolLiquidity)} sub="Test funds from deploy" info="mUSDC available to borrow. Seeded by the deploy script; repayments and interest flow back into it." />
       </div>
 
-      <div className="mt-5 grid gap-5 @4xl:grid-cols-3">
-        <div className="min-w-0 space-y-5 @4xl:col-span-2">
+      {/* Stacks earlier than other pages: the Manage loan panel needs ~360px to fit its four tabs. */}
+      <div className="mt-5 grid gap-5 @5xl:grid-cols-3">
+        <div className="min-w-0 space-y-5 @5xl:col-span-2">
           <CreditProfile />
           <div className="grid gap-5 md:grid-cols-2">
             <Card title="Health factor" info="Lending collateral × your loan's liquidation threshold ÷ debt. Below 1.0 anyone can liquidate the loan.">
@@ -148,7 +149,7 @@ export default function LendingPage() {
           </Card>
         </div>
 
-        <Card title="Manage loan" className="order-first h-fit @4xl:order-none">
+        <Card title="Manage loan" className="order-first h-fit @5xl:order-none">
           <LendingPanel />
         </Card>
       </div>

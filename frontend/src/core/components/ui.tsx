@@ -360,14 +360,17 @@ export function Tabs<T extends string>({
   value,
   onChange,
   options,
+  fill,
 }: {
   value: T;
   onChange: (v: T) => void;
   options: { value: T; label: ReactNode; title?: string }[];
+  /** Stretch over the full width with equal tabs, so they always fit their container. */
+  fill?: boolean;
 }) {
   const { ref, box } = useIndicator(value);
   return (
-    <div ref={ref} role="tablist" className="relative inline-flex rounded-xl bg-sunken p-1 ring-1 ring-line ring-inset">
+    <div ref={ref} role="tablist" className={cx("relative rounded-xl bg-sunken p-1 ring-1 ring-line ring-inset", fill ? "flex w-full" : "inline-flex")}>
       {box && (
         <span
           aria-hidden
@@ -384,7 +387,8 @@ export function Tabs<T extends string>({
           aria-label={o.title}
           onClick={() => onChange(o.value)}
           className={cx(
-            "relative rounded-lg px-3.5 py-1.5 text-[13px] font-medium transition-colors duration-200",
+            "relative rounded-lg py-1.5 text-[13px] font-medium transition-colors duration-200",
+            fill ? "min-w-0 flex-1 truncate px-1.5" : "px-3.5",
             value === o.value ? "text-ink" : "text-muted hover:text-ink",
           )}
         >
