@@ -24,6 +24,17 @@ const pct = (bps: bigint | undefined) => (bps === undefined ? null : Number(bps)
  * Mounted only while the chat is open.
  */
 export function useChatContext() {
+  const live = useLiveData();
+  // Never let a surprising value from the chain break the chat: fall back to the page name only.
+  try {
+    return buildContext(live);
+  } catch (e) {
+    console.error("Assistant: couldn't summarise the on-chain state", e);
+    return { page: live.pathname, wallet: "unknown (the site couldn't read it)" };
+  }
+}
+
+function useLiveData() {
   const { pathname } = useLocation();
   const { isConnected, chainId } = useAccount();
   const s = useAccountState();
@@ -32,7 +43,10 @@ export function useChatContext() {
   const { price, unavailable } = useMarkPrice();
   const history = useEthHistory();
   const { positions } = useOpenPositions(s.positionIds);
+  return { pathname, isConnected, chainId, s, c, market, price, unavailable, history, positions };
+}
 
+function buildContext({ pathname, isConnected, chainId, s, c, market, price, unavailable, history, positions }: ReturnType<typeof useLiveData>) {
   const page = PAGE_NAMES[pathname] ?? MODULES.find((m) => pathname.startsWith(m.path))?.name ?? pathname;
   const change = change24h(history.data, price);
   const market_ = {

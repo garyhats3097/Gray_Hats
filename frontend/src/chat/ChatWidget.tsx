@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { Component, useEffect, useRef, useState, type ErrorInfo, type ReactNode } from "react";
 import { useLocation } from "react-router-dom";
 import { AlertTriangle, ArrowUp, Loader2, MessageCircle, RotateCcw, X } from "lucide-react";
 import { cx } from "../core/components/ui";
@@ -14,7 +14,9 @@ const STORAGE_KEY = "modular-defi.chat";
 function loadMessages(): Message[] {
   try {
     const saved = JSON.parse(sessionStorage.getItem(STORAGE_KEY) ?? "[]");
-    return Array.isArray(saved) ? saved : [];
+    if (!Array.isArray(saved)) return [];
+    // Drop anything malformed so a bad saved chat can never break the panel.
+    return saved.filter((m) => m && (m.role === "user" || m.role === "assistant") && typeof m.text === "string");
   } catch {
     return [];
   }
@@ -45,7 +47,11 @@ export function ChatWidget() {
   const [open, setOpen] = useState(false);
   return (
     <>
-      {open && <ChatPanel onClose={() => setOpen(false)} />}
+      {open && (
+        <ChatErrorBoundary onClose={() => setOpen(false)}>
+          <ChatPanel onClose={() => setOpen(false)} />
+        </ChatErrorBoundary>
+      )}
       <button
         onClick={() => setOpen((o) => !o)}
         aria-label={open ? "Close assistant" : "Open assistant"}
@@ -251,4 +257,55 @@ function Notice({ children }: { children: ReactNode }) {
       <span>{children}</span>
     </div>
   );
+}
+
+/** If the panel ever crashes, show the error inside it instead of blanking the whole site. */
+class ChatErrorBoundary extends Component<{ children: ReactNode; onClose: () => void }, { error: Error | null }> {
+  state = { error: null as Error | null };
+
+  static getDerivedStateFromError(error: Error) {
+    return { error };
+  }
+
+  componentDidCatch(error: Error, info: ErrorInfo) {
+    console.error("Assistant panel crashed:", error, info.componentStack);
+  }
+
+  reset = () => {
+    try {
+      sessionStorage.removeItem(STORAGE_KEY);
+    } catch {
+      // ignore
+    }
+    this.setState({ error: null });
+  };
+
+  render() {
+    if (!this.state.error) return this.props.children;
+    return (
+      <div
+        role="dialog"
+        aria-label="Assistant"
+        className="fixed right-4 bottom-22 z-40 w-[min(400px,calc(100vw-2rem))] rounded-2xl border border-line bg-surface p-4 text-[13px] text-ink shadow-[var(--shadow-float)] sm:right-6 sm:bottom-24"
+      >
+        <p className="flex items-start gap-2">
+          <AlertTriangle size={14} className="mt-0.5 shrink-0 text-negative" />
+          <span>
+            <b>The assistant hit an error.</b> The rest of the site is fine. Please send this message to the team:
+          </span>
+        </p>
+        <pre className="mt-2 max-h-32 overflow-auto rounded-lg bg-sunken p-2 font-mono text-[11px] whitespace-pre-wrap text-muted">
+          {this.state.error.message}
+        </pre>
+        <div className="mt-3 flex gap-2">
+          <button onClick={this.reset} className="rounded-lg bg-accent px-3 py-1.5 text-white hover:bg-accent-hover">
+            Reset chat and try again
+          </button>
+          <button onClick={this.props.onClose} className="rounded-lg px-3 py-1.5 text-muted hover:bg-sunken">
+            Close
+          </button>
+        </div>
+      </div>
+    );
+  }
 }
