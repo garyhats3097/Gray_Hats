@@ -26,10 +26,10 @@ export function AmountInput({
       <label className="mb-1.5 block text-[13px] font-medium text-muted">{label}</label>
       <div
         className={cx(
-          "flex items-center gap-2 rounded-xl border bg-surface px-3.5 py-2.5 shadow-[0_1px_2px_rgb(64_46_24/0.04)_inset] transition-[border-color,box-shadow] duration-200",
+          "flex items-center gap-2 rounded-xl border bg-surface px-3.5 py-2.5 shadow-[0_1px_2px_rgb(14_23_38/0.04)_inset] transition-[border-color,box-shadow] duration-200",
           error
-            ? "border-negative/60 focus-within:shadow-[0_0_0_4px_rgb(217_61_66/0.12)]"
-            : "border-line-strong hover:border-subtle/70 focus-within:border-accent focus-within:shadow-[0_0_0_4px_rgb(91_91_214/0.14)]",
+            ? "border-negative/60 focus-within:shadow-[0_0_0_4px_rgb(229_56_59/0.12)]"
+            : "border-line-strong hover:border-subtle/70 focus-within:border-accent focus-within:shadow-[0_0_0_4px_rgb(29_78_216/0.14)]",
         )}
       >
         <input

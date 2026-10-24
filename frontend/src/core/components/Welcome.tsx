@@ -76,7 +76,7 @@ export function Welcome() {
         }}
       />
 
-      <p className="anim-rise mb-5 inline-flex items-center gap-2 rounded-full border border-line-strong bg-surface px-3 py-1 font-mono text-[11px] tracking-[0.14em] text-muted uppercase shadow-[0_1px_2px_rgb(64_46_24/0.05)]">
+      <p className="anim-rise mb-5 inline-flex items-center gap-2 rounded-full border border-line-strong bg-surface px-3 py-1 font-mono text-[11px] tracking-[0.14em] text-muted uppercase shadow-[0_1px_2px_rgb(14_23_38/0.05)]">
         <span className="h-1.5 w-1.5 rounded-full bg-accent" />
         One Core. Multiple Financial Products.
       </p>

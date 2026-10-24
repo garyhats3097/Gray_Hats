@@ -108,10 +108,10 @@ export default function LendingPage() {
       )}
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4">
-        <StatCard label="Collateral in Lending" value={fmtUsd(s.lendingCollateral)} loading={s.isLoading} info="Collateral locked in the shared vault for the Lending module. It cannot be used by Perpetuals at the same time." />
-        <StatCard label="Outstanding debt" value={fmtUsd(s.debt)} sub={s.debt > 0n ? "Includes accrued interest" : undefined} loading={s.isLoading} />
-        <StatCard label="Borrow capacity left" value={fmtUsd(s.borrowCapacity)} loading={s.isLoading} info="Your credit tier's limit on your lending collateral (including any unsecured allowance), minus what you already owe." />
-        <StatCard label="Pool liquidity" value={poolLiquidity === undefined ? "—" : fmtUsd(poolLiquidity)} sub="Test funds from deploy" info="mUSDC available to borrow. Seeded by the deploy script; repayments and interest flow back into it." />
+        <StatCard tint="var(--color-lending)" label="Collateral in Lending" value={fmtUsd(s.lendingCollateral)} loading={s.isLoading} info="Collateral locked in the shared vault for the Lending module. It cannot be used by Perpetuals at the same time." />
+        <StatCard tint="var(--color-negative)" label="Outstanding debt" value={fmtUsd(s.debt)} sub={s.debt > 0n ? "Includes accrued interest" : undefined} loading={s.isLoading} />
+        <StatCard tint="var(--color-positive)" label="Borrow capacity left" value={fmtUsd(s.borrowCapacity)} loading={s.isLoading} info="Your credit tier's limit on your lending collateral (including any unsecured allowance), minus what you already owe." />
+        <StatCard tint="var(--color-accent)" label="Pool liquidity" value={poolLiquidity === undefined ? "—" : fmtUsd(poolLiquidity)} sub="Test funds from deploy" info="mUSDC available to borrow. Seeded by the deploy script; repayments and interest flow back into it." />
       </div>
 
       <div className="mt-5 grid gap-5 lg:grid-cols-3">

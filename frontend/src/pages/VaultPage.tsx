@@ -32,10 +32,10 @@ export default function VaultPage() {
       />
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4">
-        <StatCard label="Wallet balance" value={fmtUsd(s.walletBalance)} sub="Not in the vault" loading={s.isLoading} />
-        <StatCard label="Deposited" value={fmtUsd(s.deposits)} loading={s.isLoading} />
-        <StatCard label="Available to withdraw" value={fmtUsd(s.free)} loading={s.isLoading} />
-        <StatCard label="Locked by modules" value={fmtUsd(s.totalLocked)} loading={s.isLoading} />
+        <StatCard tint="var(--color-marketmaker)" label="Wallet balance" value={fmtUsd(s.walletBalance)} sub="Not in the vault" loading={s.isLoading} />
+        <StatCard tint="var(--color-accent)" label="Deposited" value={fmtUsd(s.deposits)} loading={s.isLoading} />
+        <StatCard tint="var(--color-positive)" label="Available to withdraw" value={fmtUsd(s.free)} loading={s.isLoading} />
+        <StatCard tint="var(--color-lending)" label="Locked by modules" value={fmtUsd(s.totalLocked)} loading={s.isLoading} />
       </div>
 
       <div className="mt-5 grid gap-5 lg:grid-cols-3">

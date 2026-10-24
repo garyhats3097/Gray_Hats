@@ -14,7 +14,7 @@ export function useWrongNetwork() {
 export function NetworkBadge() {
   const wrong = useWrongNetwork();
   return (
-    <span className="hidden h-10 items-center gap-2.5 rounded-xl border border-line bg-surface px-3 text-sm text-muted shadow-[0_1px_2px_rgb(64_46_24/0.05)] sm:inline-flex">
+    <span className="hidden h-10 items-center gap-2.5 rounded-xl border border-line bg-surface px-3 text-sm text-muted shadow-[0_1px_2px_rgb(14_23_38/0.05)] sm:inline-flex">
       <LiveDot tone={wrong ? "negative" : "positive"} />
       {wrong ? "Wrong network" : anvilLocal.name}
     </span>

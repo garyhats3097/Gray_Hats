@@ -48,7 +48,7 @@ export function TradePanel() {
             aria-hidden
             className={cx(
               "absolute top-1 bottom-1 rounded-lg transition-[left,background-color,box-shadow] duration-300 ease-[var(--ease-out)]",
-              isLong ? "bg-positive shadow-[0_6px_14px_-6px_rgb(15_138_124/0.6)]" : "bg-negative shadow-[0_6px_14px_-6px_rgb(217_61_66/0.6)]",
+              isLong ? "bg-positive shadow-[0_6px_14px_-6px_rgb(14_159_85/0.6)]" : "bg-negative shadow-[0_6px_14px_-6px_rgb(229_56_59/0.6)]",
             )}
             style={{ left: side.box.left, width: side.box.width }}
           />
@@ -136,8 +136,8 @@ export function TradePanel() {
         className={cx(
           "w-full",
           isLong
-            ? "!bg-positive enabled:hover:!bg-positive/90 enabled:hover:!shadow-[0_10px_22px_-10px_rgb(15_138_124/0.8)]"
-            : "!bg-negative enabled:hover:!bg-negative/90 enabled:hover:!shadow-[0_10px_22px_-10px_rgb(217_61_66/0.8)]",
+            ? "!bg-positive enabled:hover:!bg-positive/90 enabled:hover:!shadow-[0_10px_22px_-10px_rgb(14_159_85/0.8)]"
+            : "!bg-negative enabled:hover:!bg-negative/90 enabled:hover:!shadow-[0_10px_22px_-10px_rgb(229_56_59/0.8)]",
         )}
         size="lg"
         disabled={!ready}

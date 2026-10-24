@@ -66,9 +66,10 @@ export default function PortfolioPage() {
         <div className="space-y-5">
           {/* Headline numbers — parts of ONE deposit, never summed with PnL or debt */}
           <div className="grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4">
-            <StatCard label="Total deposited" value={fmtUsd(s.deposits)} loading={s.isLoading} info="Everything you can claim from the shared vault, including locked collateral." />
-            <StatCard label="Available" value={fmtUsd(s.free)} sub="Free to withdraw or use" loading={s.isLoading} info="Deposited collateral that no module has locked. Only this amount can be withdrawn." />
+            <StatCard tint="var(--color-accent)" label="Total deposited" value={fmtUsd(s.deposits)} loading={s.isLoading} info="Everything you can claim from the shared vault, including locked collateral." />
+            <StatCard tint="var(--color-positive)" label="Available" value={fmtUsd(s.free)} sub="Free to withdraw or use" loading={s.isLoading} info="Deposited collateral that no module has locked. Only this amount can be withdrawn." />
             <StatCard
+              tint="var(--color-lending)"
               label="Locked"
               value={fmtUsd(s.totalLocked)}
               sub={`Perps ${fmtUsd(s.lockedPerps)} · Lending ${fmtUsd(s.lockedLending)}`}

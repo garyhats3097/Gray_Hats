@@ -104,7 +104,7 @@ export function HealthGauge({ hf }: { hf: number | null }) {
         {marker && alert && (
           <circle cx={marker[0]} cy={marker[1]} r={8} fill={status.tone === "negative" ? "var(--color-negative)" : "var(--color-warning-mark)"} className="animate-live" style={{ transformBox: "fill-box", transformOrigin: "center" }} />
         )}
-        {marker && <circle cx={marker[0]} cy={marker[1]} r={8} fill="var(--color-surface)" stroke="var(--color-ink)" strokeWidth={3} style={{ filter: "drop-shadow(0 2px 3px rgb(64 46 24 / 0.25))" }} />}
+        {marker && <circle cx={marker[0]} cy={marker[1]} r={8} fill="var(--color-surface)" stroke="var(--color-ink)" strokeWidth={3} style={{ filter: "drop-shadow(0 2px 3px rgb(14 23 38 / 0.25))" }} />}
       </svg>
       <div className="absolute inset-x-0 bottom-0 flex flex-col items-center">
         <span

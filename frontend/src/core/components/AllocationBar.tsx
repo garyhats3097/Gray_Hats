@@ -22,7 +22,7 @@ export function AllocationBar({ segments, total }: { segments: AllocationSegment
 
   return (
     <div onMouseLeave={() => setHovered(null)}>
-      <div className="flex h-3 w-full items-center gap-[2px] rounded-full bg-sunken" role="img" aria-label="Collateral allocation">
+      <div className="flex h-3.5 w-full items-center gap-[2px] rounded-full bg-sunken" role="img" aria-label="Collateral allocation">
         {t > 0 &&
           visible.map((s, i) => (
             <div

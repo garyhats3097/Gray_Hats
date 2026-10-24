@@ -1,4 +1,4 @@
-import { forwardRef, useEffect, useLayoutEffect, useRef, useState, type ButtonHTMLAttributes, type ReactNode } from "react";
+import { forwardRef, useEffect, useLayoutEffect, useRef, useState, type ButtonHTMLAttributes, type CSSProperties, type ReactNode } from "react";
 import { Info, Loader2 } from "lucide-react";
 
 export function cx(...classes: (string | false | null | undefined)[]) {
@@ -29,7 +29,8 @@ export function Card({
     >
       {(title || action) && (
         <header className={cx("flex items-center justify-between gap-3", padded ? "px-5 pt-5 sm:px-6" : "px-5 py-4 sm:px-6")}>
-          <h2 className="flex items-center gap-1.5 text-[15px] font-semibold text-ink">
+          <h2 className="flex items-center gap-1.5 text-base font-semibold text-ink">
+            <span aria-hidden className="mr-1 h-2 w-2 shrink-0 rounded-[2px]" style={{ background: "var(--module-color, var(--color-accent))" }} />
             {title}
             {info && <InfoTip text={info} />}
           </h2>
@@ -80,15 +81,13 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
         size === "sm" && "h-8 px-3 text-[13px]",
         size === "md" && "h-10 px-4 text-sm",
         size === "lg" && "h-12 px-5 text-[15px]",
-        variant === "primary" &&
-          "bg-ink text-white shadow-[0_1px_0_rgb(255_255_255/0.12)_inset,0_1px_2px_rgb(24_24_27/0.2)] enabled:hover:-translate-y-px enabled:hover:bg-black enabled:hover:shadow-[0_1px_0_rgb(255_255_255/0.12)_inset,0_8px_18px_-8px_rgb(24_24_27/0.55)]",
-        variant === "accent" &&
-          "bg-accent text-white shadow-[0_1px_0_rgb(255_255_255/0.18)_inset,0_1px_2px_rgb(75_75_196/0.3)] enabled:hover:-translate-y-px enabled:hover:bg-accent-hover enabled:hover:shadow-[0_1px_0_rgb(255_255_255/0.18)_inset,0_8px_20px_-8px_rgb(91_91_214/0.7)]",
+        (variant === "primary" || variant === "accent") &&
+          "bg-accent text-white shadow-[0_1px_0_rgb(255_255_255/0.18)_inset,0_1px_2px_rgb(29_78_216/0.3)] enabled:hover:-translate-y-px enabled:hover:bg-accent-hover enabled:hover:shadow-[0_1px_0_rgb(255_255_255/0.18)_inset,0_8px_20px_-8px_rgb(29_78_216/0.7)]",
         variant === "secondary" &&
-          "border border-line-strong bg-surface text-ink shadow-[0_1px_2px_rgb(64_46_24/0.05)] enabled:hover:-translate-y-px enabled:hover:border-subtle/60 enabled:hover:shadow-[0_6px_14px_-8px_rgb(64_46_24/0.3)]",
+          "border border-line-strong bg-surface text-ink shadow-[0_1px_2px_rgb(14_23_38/0.05)] enabled:hover:-translate-y-px enabled:hover:border-subtle/60 enabled:hover:shadow-[0_6px_14px_-8px_rgb(14_23_38/0.3)]",
         variant === "ghost" && "text-muted hover:bg-sunken hover:text-ink",
         variant === "danger" &&
-          "border border-negative/30 bg-surface text-negative enabled:hover:-translate-y-px enabled:hover:bg-negative-soft enabled:hover:shadow-[0_6px_14px_-8px_rgb(217_61_66/0.45)]",
+          "border border-negative/30 bg-surface text-negative enabled:hover:-translate-y-px enabled:hover:bg-negative-soft enabled:hover:shadow-[0_6px_14px_-8px_rgb(229_56_59/0.45)]",
         className,
       )}
       {...rest}
@@ -197,6 +196,7 @@ export function Stat({
   info,
   tone,
   loading,
+  color,
 }: {
   label: string;
   value: ReactNode;
@@ -204,11 +204,13 @@ export function Stat({
   info?: string;
   tone?: "positive" | "negative";
   loading?: boolean;
+  /** CSS colour for the value when no positive/negative tone applies. */
+  color?: string;
 }) {
   const flash = useFlash(value);
   return (
     <div className="min-w-0">
-      <div className="flex items-center gap-1.5 text-[13px] text-muted">
+      <div className="flex items-center gap-1.5 text-[13px] font-semibold text-muted">
         {label}
         {info && <InfoTip text={info} />}
       </div>
@@ -222,6 +224,7 @@ export function Stat({
             tone === "negative" && "text-negative",
             flash,
           )}
+          style={tone ? undefined : { color }}
         >
           {typeof value === "string" ? <Ticker value={value} /> : value}
         </div>
@@ -231,10 +234,18 @@ export function Stat({
   );
 }
 
-export function StatCard(props: Parameters<typeof Stat>[0]) {
+/**
+ * Stat in its own card. `tint` (a CSS colour) washes the card and colours the value, so each
+ * headline number is recognisable at a glance; a positive/negative `tone` takes the matching tint.
+ */
+export function StatCard({ tint, ...props }: Parameters<typeof Stat>[0] & { tint?: string }) {
+  const t = props.tone === "positive" ? "var(--color-positive)" : props.tone === "negative" ? "var(--color-negative)" : tint;
   return (
-    <div className="card anim-rise min-w-0 rounded-[var(--radius-card)] border border-line bg-surface p-5 shadow-[var(--shadow-card)]">
-      <Stat {...props} />
+    <div
+      className={cx("card anim-rise min-w-0 rounded-[var(--radius-card)] border border-line bg-surface p-5 shadow-[var(--shadow-card)]", t && "tinted")}
+      style={t ? ({ "--tint": t } as CSSProperties) : undefined}
+    >
+      <Stat {...props} color={t} />
     </div>
   );
 }
@@ -358,7 +369,7 @@ export function Tabs<T extends string>({
       {box && (
         <span
           aria-hidden
-          className="absolute top-1 bottom-1 rounded-lg bg-surface shadow-[0_1px_2px_rgb(64_46_24/0.1),0_2px_6px_-2px_rgb(64_46_24/0.12)] transition-[left,width] duration-300 ease-[var(--ease-out)]"
+          className="absolute top-1 bottom-1 rounded-lg bg-surface shadow-[0_1px_2px_rgb(14_23_38/0.1),0_2px_6px_-2px_rgb(14_23_38/0.12)] transition-[left,width] duration-300 ease-[var(--ease-out)]"
           style={{ left: box.left, width: box.width }}
         />
       )}

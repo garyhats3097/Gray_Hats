@@ -39,7 +39,7 @@ function NavGroup({ title, items, numbered }: { title?: string; items: NavItem[]
               className={({ isActive }) =>
                 cx(
                   "group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-[background-color,color,box-shadow] duration-200",
-                  isActive ? "bg-surface text-ink shadow-[var(--shadow-card)] ring-1 ring-line" : "text-muted hover:bg-surface/70 hover:text-ink",
+                  isActive ? "bg-accent-soft text-accent" : "text-muted hover:bg-surface/70 hover:text-ink",
                 )
               }
             >
@@ -125,7 +125,7 @@ export function Layout({ children }: { children: ReactNode }) {
   return (
     <div className="min-h-screen lg:pl-64">
       {/* Desktop sidebar */}
-      <aside className="fixed inset-y-0 left-0 hidden w-64 border-r border-line bg-canvas/80 backdrop-blur lg:block">
+      <aside className="fixed inset-y-0 left-0 hidden w-64 border-r border-frame bg-canvas/80 backdrop-blur lg:block">
         <SidebarContent />
       </aside>
 
@@ -145,7 +145,7 @@ export function Layout({ children }: { children: ReactNode }) {
       <header
         className={cx(
           "sticky top-0 z-20 flex h-16 items-center justify-between gap-3 border-b bg-canvas/85 px-4 backdrop-blur transition-[box-shadow,border-color] duration-300 sm:px-8",
-          scrolled ? "border-line shadow-[0_8px_24px_-16px_rgb(64_46_24/0.25)]" : "border-transparent",
+          scrolled ? "border-frame shadow-[0_8px_24px_-16px_rgb(14_23_38/0.25)]" : "border-frame",
         )}
       >
         <button onClick={() => setMobileOpen(true)} aria-label="Open menu" className="rounded-lg p-1.5 text-muted transition-colors hover:bg-sunken hover:text-ink lg:hidden">

@@ -50,7 +50,7 @@ export function ConnectButton({ size = "md" }: { size?: "md" | "lg" }) {
     <div className="relative">
       <button
         onClick={() => setOpen((o) => !o)}
-        className="flex h-10 items-center gap-2 rounded-xl border border-line bg-surface px-3 text-sm font-medium shadow-[0_1px_2px_rgb(64_46_24/0.05)] transition-[box-shadow,border-color] duration-200 hover:border-line-strong hover:shadow-[0_6px_14px_-8px_rgb(64_46_24/0.3)]"
+        className="flex h-10 items-center gap-2 rounded-xl border border-line bg-surface px-3 text-sm font-medium shadow-[0_1px_2px_rgb(14_23_38/0.05)] transition-[box-shadow,border-color] duration-200 hover:border-line-strong hover:shadow-[0_6px_14px_-8px_rgb(14_23_38/0.3)]"
       >
         <span className="h-5 w-5 rounded-full bg-gradient-to-br from-accent to-lending ring-2 ring-surface shadow-[0_0_0_1px_var(--color-line)]" aria-hidden />
         <span className="tabular">{shortAddress(address)}</span>

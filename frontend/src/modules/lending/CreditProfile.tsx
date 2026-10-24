@@ -4,7 +4,7 @@ import { fmtUsd, toNumber } from "../../core/lib/format";
 import { TIERS, useCredit } from "./hooks";
 
 /** Tier bands get darker with a higher tier (one hue, light → dark). */
-const BAND_COLORS = ["#dcdcf6", "#b4b4ee", "#8585e1", "#5b5bd6"];
+const BAND_COLORS = ["#dbe5fb", "#b3c7f7", "#6f95ee", "#1d4ed8"];
 
 function ScoreBar({ score }: { score: number }) {
   const bands = TIERS.map((t, i) => ({ ...t, from: t.minScore, to: TIERS[i + 1]?.minScore ?? 100 }));
