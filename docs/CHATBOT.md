@@ -31,6 +31,7 @@ browser (chat panel)  ──/api/chat──▶  Vite dev server (proxy)  ──�
    nano .env            # paste the key after GEMINI_API_KEY=   (Ctrl+O, Enter, Ctrl+X)
    ```
 3. Test it from the terminal: `npm run ask -- "what is a health factor?"`
+   If anything fails, `npm run doctor` checks the connection, the key and each model, with timings.
 
 Alternative provider: Groq (https://console.groq.com/keys) — set `CHAT_PROVIDER=groq` and
 `GROQ_API_KEY=` in `.env`.
