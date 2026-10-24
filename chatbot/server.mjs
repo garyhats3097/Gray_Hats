@@ -43,7 +43,7 @@ const HOST = process.env.CHAT_HOST || "127.0.0.1";
 const PROVIDERS = {
   gemini: {
     key: process.env.GEMINI_API_KEY,
-    model: process.env.GEMINI_MODEL || "gemini-2.5-flash",
+    model: process.env.GEMINI_MODEL || "gemini-3.5-flash-lite",
     keyName: "GEMINI_API_KEY",
     keyUrl: "https://aistudio.google.com/apikey",
   },
@@ -64,7 +64,7 @@ if (!P) {
 const MAX_MESSAGES = 12; // conversation turns sent to the AI
 const MAX_CHARS = 2000; // per message
 const RATE_PER_MINUTE = 15; // per visitor
-const TIMEOUT_MS = 20_000; // per attempt; a slow model is skipped for the next one
+const TIMEOUT_MS = 25_000; // per attempt; a slow model is skipped for the next one
 
 // ------------------------------------------------------------------ knowledge
 
@@ -144,7 +144,7 @@ function explainHttpError(status, body, model) {
 
 /** The configured Gemini model first, then other free models if it is busy or missing. */
 const GEMINI_MODELS = [
-  ...new Set([P.model, ...(process.env.GEMINI_FALLBACK_MODELS ?? "gemini-2.5-flash-lite,gemini-flash-latest").split(",")].map((m) => m.trim()).filter(Boolean)),
+  ...new Set([P.model, ...(process.env.GEMINI_FALLBACK_MODELS ?? "gemini-3.8-flash,gemini-flash-latest").split(",")].map((m) => m.trim()).filter(Boolean)),
 ];
 
 async function askGeminiWithFallback(system, messages) {
@@ -172,7 +172,14 @@ async function askGeminiWithFallback(system, messages) {
   throw lastError;
 }
 
-async function askGemini(model, system, messages) {
+/** How much a model may "think" before answering. A help bot needs little, and thinking is slow. */
+function thinkingFor(model) {
+  if (/^gemini-2\.5-flash/.test(model)) return { thinkingBudget: 0 };
+  if (/^gemini-(3|flash-latest|flash-lite-latest)/.test(model)) return { thinkingLevel: "low" };
+  return undefined;
+}
+
+async function askGemini(model, system, messages, thinking = thinkingFor(model)) {
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`;
   const res = await fetch(url, {
     method: "POST",
@@ -181,19 +188,20 @@ async function askGemini(model, system, messages) {
     body: JSON.stringify({
       systemInstruction: { parts: [{ text: system }] },
       contents: messages.map((m) => ({ role: m.role === "assistant" ? "model" : "user", parts: [{ text: m.text }] })),
-      generationConfig: {
-        temperature: 0.3,
-        maxOutputTokens: 4096,
-        // 2.5 Flash models "think" before answering by default, which is slow; a help bot doesn't need it.
-        ...(/^gemini-2\.5-flash/.test(model) && { thinkingConfig: { thinkingBudget: 0 } }),
-      },
+      generationConfig: { temperature: 0.3, maxOutputTokens: 4096, ...(thinking && { thinkingConfig: thinking }) },
     }),
   });
   const body = await res.text();
+  // A model that doesn't accept this thinking setting: ask again without it.
+  if (res.status === 400 && thinking && /think/i.test(providerMessage(body))) return askGemini(model, system, messages, null);
   if (!res.ok) throw explainHttpError(res.status, body, model);
   const data = JSON.parse(body);
   const candidate = data.candidates?.[0];
-  const text = candidate?.content?.parts?.map((p) => p.text ?? "").join("").trim();
+  const text = candidate?.content?.parts
+    ?.filter((p) => !p.thought)
+    .map((p) => p.text ?? "")
+    .join("")
+    .trim();
   if (!text) {
     const reason = data.promptFeedback?.blockReason || candidate?.finishReason || "empty reply";
     throw new ChatError(502, `The AI gave no answer (${reason}). Try rephrasing the question.`);
