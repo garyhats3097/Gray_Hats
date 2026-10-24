@@ -49,7 +49,7 @@ const PROVIDERS = {
   },
   groq: {
     key: process.env.GROQ_API_KEY,
-    model: process.env.GROQ_MODEL || "llama-3.3-70b-versatile",
+    model: process.env.GROQ_MODEL || "openai/gpt-oss-120b",
     keyName: "GROQ_API_KEY",
     keyUrl: "https://console.groq.com/keys",
   },
@@ -149,7 +149,7 @@ function explainHttpError(status, body, model) {
 /** The configured model first, then other free models if it is busy, over its limit or missing. */
 const FALLBACKS = {
   gemini: process.env.GEMINI_FALLBACK_MODELS ?? "gemini-3.8-flash,gemini-flash-latest",
-  groq: process.env.GROQ_FALLBACK_MODELS ?? "llama-3.1-8b-instant,openai/gpt-oss-20b",
+  groq: process.env.GROQ_FALLBACK_MODELS ?? "openai/gpt-oss-20b",
 };
 const MODELS = [...new Set([P.model, ...FALLBACKS[PROVIDER].split(",")].map((m) => m.trim()).filter(Boolean))];
 
@@ -216,7 +216,7 @@ async function askGemini(model, system, messages, thinking = thinkingFor(model))
   return text;
 }
 
-async function askGroq(model, system, messages) {
+async function askGroq(model, system, messages, effort = /gpt-oss/.test(model) ? "low" : undefined) {
   const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
     method: "POST",
     headers: { "content-type": "application/json", authorization: `Bearer ${P.key}` },
@@ -224,11 +224,14 @@ async function askGroq(model, system, messages) {
     body: JSON.stringify({
       model,
       temperature: 0.3,
-      max_tokens: 1024,
+      max_tokens: 1500,
+      // gpt-oss models reason before answering; "low" keeps that short and fast.
+      ...(effort && { reasoning_effort: effort }),
       messages: [{ role: "system", content: system }, ...messages.map((m) => ({ role: m.role, content: m.text }))],
     }),
   });
   const body = await res.text();
+  if (res.status === 400 && effort && /reasoning/i.test(providerMessage(body))) return askGroq(model, system, messages, null);
   if (!res.ok) throw explainHttpError(res.status, body, model);
   const text = JSON.parse(body).choices?.[0]?.message?.content?.trim();
   if (!text) throw new ChatError(502, "The AI gave no answer. Try rephrasing the question.");
@@ -328,7 +331,17 @@ async function doctor() {
     const host = PROVIDER === "groq" ? "https://api.groq.com/openai/v1/models" : "https://generativelanguage.googleapis.com/v1beta/models";
     const headers = PROVIDER === "groq" ? { authorization: `Bearer ${P.key}` } : { "x-goog-api-key": P.key ?? "" };
     const res = await fetch(host, { headers, signal: AbortSignal.timeout(10_000) });
-    console.log(`1) Reach the AI service: OK, HTTP ${res.status} in ${((Date.now() - t0) / 1000).toFixed(1)}s ${res.ok ? "(key accepted)" : "— " + providerMessage(await res.text())}`);
+    const body = await res.text();
+    console.log(`1) Reach the AI service: OK, HTTP ${res.status} in ${((Date.now() - t0) / 1000).toFixed(1)}s ${res.ok ? "(key accepted)" : "— " + providerMessage(body)}`);
+    if (res.ok) {
+      try {
+        const data = JSON.parse(body);
+        const ids = (data.data ?? data.models ?? []).map((m) => (m.id ?? m.name ?? "").replace(/^models\//, "")).filter(Boolean);
+        if (ids.length) console.log(`   Models your key can use: ${ids.sort().join(", ")}`);
+      } catch {
+        // list is optional
+      }
+    }
   } catch (e) {
     console.log(`1) Reach the AI service: FAILED after ${((Date.now() - t0) / 1000).toFixed(1)}s (${e?.cause?.code || e?.name || e}) — network problem, not the bot`);
     return;
