@@ -75,10 +75,10 @@ function SidebarContent() {
   return (
     <div className="flex h-full flex-col px-4 py-5">
       <div className="mb-8 flex items-center gap-2.5 px-2">
-        <img src="/logo.svg" alt="" className="h-8 w-8 transition-transform duration-500 ease-[var(--ease-out)] hover:rotate-[-8deg]" />
+        <img src="/logo.svg" alt="" className="h-9 w-9 object-contain transition-transform duration-500 ease-[var(--ease-out)] hover:scale-105" />
         <div className="leading-tight">
-          <p className="display text-[19px] leading-none font-medium">Modular DeFi</p>
-          <p className="mt-1 text-[11px] text-subtle">One Core. Multiple Products.</p>
+          <p className="display text-[20px] leading-none font-bold text-ink">Modular DeFi</p>
+          <p className="mt-1.5 text-[8px] font-medium tracking-[0.07em] whitespace-nowrap text-accent uppercase">One Core. Multiple Products.</p>
         </div>
       </div>
       <nav className="flex flex-1 flex-col gap-6" aria-label="Main">
@@ -151,7 +151,11 @@ export function Layout({ children }: { children: ReactNode }) {
         <button onClick={() => setMobileOpen(true)} aria-label="Open menu" className="rounded-lg p-1.5 text-muted transition-colors hover:bg-sunken hover:text-ink lg:hidden">
           <Menu size={22} />
         </button>
-        <div className="flex-1" />
+        <div className="flex flex-1 items-center gap-2 lg:hidden">
+          <img src="/logo.svg" alt="" className="h-7 w-7 object-contain" />
+          <span className="display hidden text-[18px] font-bold min-[400px]:inline">Modular DeFi</span>
+        </div>
+        <div className="hidden flex-1 lg:block" />
         <NetworkBadge />
         <ConnectButton />
       </header>
