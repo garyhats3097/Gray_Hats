@@ -14,7 +14,7 @@ export default function HelpPage() {
   return (
     <>
       <PageHeader title="Help & Setup" subtitle="Connect MetaMask to the local prototype chain." />
-      <div className="grid gap-5 lg:grid-cols-2">
+      <div className="grid gap-5 @3xl:grid-cols-2">
         <Card title="Add the local network to MetaMask">
           <ol className="space-y-3">
             <Step n={1}>Make sure the chain is running (<code className="rounded bg-sunken px-1">./scripts/start-chain.sh</code> in a terminal).</Step>

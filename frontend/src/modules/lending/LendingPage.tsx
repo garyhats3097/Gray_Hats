@@ -107,15 +107,15 @@ export default function LendingPage() {
         </div>
       )}
 
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4">
+      <div className="grid grid-cols-2 gap-3 @3xl:grid-cols-4 @3xl:gap-4">
         <StatCard tint="var(--color-lending)" label="Collateral in Lending" value={fmtUsd(s.lendingCollateral)} loading={s.isLoading} info="Collateral locked in the shared vault for the Lending module. It cannot be used by Perpetuals at the same time." />
         <StatCard tint="var(--color-negative)" label="Outstanding debt" value={fmtUsd(s.debt)} sub={s.debt > 0n ? "Includes accrued interest" : undefined} loading={s.isLoading} />
         <StatCard tint="var(--color-positive)" label="Borrow capacity left" value={fmtUsd(s.borrowCapacity)} loading={s.isLoading} info="Your credit tier's limit on your lending collateral (including any unsecured allowance), minus what you already owe." />
         <StatCard tint="var(--color-accent)" label="Pool liquidity" value={poolLiquidity === undefined ? "—" : fmtUsd(poolLiquidity)} sub="Test funds from deploy" info="mUSDC available to borrow. Seeded by the deploy script; repayments and interest flow back into it." />
       </div>
 
-      <div className="mt-5 grid gap-5 lg:grid-cols-3">
-        <div className="min-w-0 space-y-5 lg:col-span-2">
+      <div className="mt-5 grid gap-5 @4xl:grid-cols-3">
+        <div className="min-w-0 space-y-5 @4xl:col-span-2">
           <CreditProfile />
           <div className="grid gap-5 md:grid-cols-2">
             <Card title="Health factor" info="Lending collateral × your loan's liquidation threshold ÷ debt. Below 1.0 anyone can liquidate the loan.">
@@ -148,7 +148,7 @@ export default function LendingPage() {
           </Card>
         </div>
 
-        <Card title="Manage loan" className="order-first h-fit lg:order-none">
+        <Card title="Manage loan" className="order-first h-fit @4xl:order-none">
           <LendingPanel />
         </Card>
       </div>

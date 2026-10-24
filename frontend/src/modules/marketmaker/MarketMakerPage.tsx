@@ -209,11 +209,11 @@ export default function MarketMakerPage() {
         </div>
       </Card>
 
-      <div className="grid items-start gap-5 lg:grid-cols-3">
+      <div className="grid items-start gap-5 @4xl:grid-cols-3">
         {/* Live quotes */}
         <Card
           title="Live quotes"
-          className="lg:col-span-2"
+          className="@4xl:col-span-2"
           info="Bid = price the module would buy ETH at. Ask = price it would sell at. Both sit half the spread away from the reference price."
           action={<Badge tone="warning">Indicative — not executable</Badge>}
         >
@@ -260,14 +260,14 @@ export default function MarketMakerPage() {
         </Card>
 
         {/* Settings */}
-        <Card title="Spread settings" className="h-fit lg:row-span-2" action={<Settings2 size={16} className="text-subtle" />}>
+        <Card title="Spread settings" className="h-fit @4xl:row-span-2" action={<Settings2 size={16} className="text-subtle" />}>
           <Settings mm={mm} />
         </Card>
 
         {/* Liquidity */}
         <Card
           title="Liquidity & inventory"
-          className="lg:col-span-2"
+          className="@4xl:col-span-2"
           info="Liquidity is this module's reserve inside the shared CoreVault — no separate vault. It locks no user collateral."
         >
           <div className="divide-y divide-line">
@@ -289,7 +289,7 @@ export default function MarketMakerPage() {
         </Card>
 
         {/* History */}
-        <Card title="Activity history" className="lg:col-span-3" padded={false}>
+        <Card title="Activity history" className="@4xl:col-span-3" padded={false}>
           {history.isLoading ? (
             <Spinner />
           ) : !history.data?.length ? (

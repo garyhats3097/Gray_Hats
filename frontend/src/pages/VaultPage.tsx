@@ -31,15 +31,15 @@ export default function VaultPage() {
         action={<FaucetButton />}
       />
 
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4">
+      <div className="grid grid-cols-2 gap-3 @3xl:grid-cols-4 @3xl:gap-4">
         <StatCard tint="var(--color-marketmaker)" label="Wallet balance" value={fmtUsd(s.walletBalance)} sub="Not in the vault" loading={s.isLoading} />
         <StatCard tint="var(--color-accent)" label="Deposited" value={fmtUsd(s.deposits)} loading={s.isLoading} />
         <StatCard tint="var(--color-positive)" label="Available to withdraw" value={fmtUsd(s.free)} loading={s.isLoading} />
         <StatCard tint="var(--color-lending)" label="Locked by modules" value={fmtUsd(s.totalLocked)} loading={s.isLoading} />
       </div>
 
-      <div className="mt-5 grid gap-5 lg:grid-cols-3">
-        <div className="min-w-0 space-y-5 lg:col-span-2">
+      <div className="mt-5 grid gap-5 @4xl:grid-cols-3">
+        <div className="min-w-0 space-y-5 @4xl:col-span-2">
           <Card title="Where your collateral is" info="Each module can only lock collateral that is still available, so nothing is counted twice.">
             {s.isLoading ? (
               <Skeleton className="h-52 w-full" />
@@ -105,7 +105,7 @@ export default function VaultPage() {
           </Card>
         </div>
 
-        <Card title="Manage collateral" className="order-first h-fit lg:order-none">
+        <Card title="Manage collateral" className="order-first h-fit @4xl:order-none">
           <VaultForm />
         </Card>
       </div>

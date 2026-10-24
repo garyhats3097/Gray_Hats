@@ -32,8 +32,8 @@ export default function PerpsPage() {
       />
 
       <Card padded={false} className="mb-5">
-        <div className="grid grid-cols-2 gap-x-6 gap-y-4 p-5 sm:p-6 md:grid-cols-5">
-          <div className="col-span-2 flex items-center gap-3 md:col-span-1">
+        <div className="grid grid-cols-2 gap-x-6 gap-y-4 p-5 sm:p-6 @2xl:grid-cols-4 @5xl:grid-cols-5">
+          <div className="col-span-2 flex items-center gap-3 @2xl:col-span-4 @5xl:col-span-1">
             <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[#627eea] text-sm font-bold text-white">Ξ</span>
             <div>
               <p className="font-semibold">ETH/USD</p>
@@ -51,16 +51,16 @@ export default function PerpsPage() {
         </div>
       </Card>
 
-      <div className="grid gap-5 lg:grid-cols-3">
-        <Card title="Price" info="Real ETH/USD market history, followed by the live on-chain oracle price that the contracts use." className="lg:col-span-2">
+      <div className="grid gap-5 @4xl:grid-cols-3">
+        <Card title="Price" info="Real ETH/USD market history, followed by the live on-chain oracle price that the contracts use." className="@4xl:col-span-2">
           <PriceChart positions={positions} />
         </Card>
-        <Card title="Trade" className="h-fit lg:row-span-2">
+        <Card title="Trade" className="h-fit @4xl:row-span-2">
           <TradePanel />
         </Card>
         <Card
           padded={false}
-          className="lg:col-span-2"
+          className="@4xl:col-span-2"
           title={<Tabs value={tab} onChange={setTab} options={[{ value: "open", label: `Open (${positions.length})` }, { value: "closed", label: "History" }]} />}
           action={
             tab === "open" && s.unrealizedPnl !== undefined && positions.length > 0 ? (

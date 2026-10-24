@@ -47,7 +47,7 @@ export default function PortfolioPage() {
       ) : (
         <div className="space-y-5">
           {/* Headline numbers — parts of ONE deposit, never summed with PnL or debt */}
-          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4">
+          <div className="grid grid-cols-2 gap-3 @3xl:grid-cols-4 @3xl:gap-4">
             <StatCard tint="var(--color-accent)" label="Total deposited" value={fmtUsd(s.deposits)} loading={s.isLoading} info="Everything you can claim from the shared vault, including locked collateral." />
             <StatCard tint="var(--color-positive)" label="Available" value={fmtUsd(s.free)} sub="Free to withdraw or use" loading={s.isLoading} info="Deposited collateral that no module has locked. Only this amount can be withdrawn." />
             <StatCard
@@ -68,8 +68,8 @@ export default function PortfolioPage() {
             />
           </div>
 
-          <div className="grid gap-5 lg:grid-cols-3">
-            <Card title="Your collateral" info="How your deposit is split. Locked collateral belongs to you but is committed to a module." className="lg:col-span-2">
+          <div className="grid gap-5 @4xl:grid-cols-3">
+            <Card title="Your collateral" info="How your deposit is split. Locked collateral belongs to you but is committed to a module." className="@4xl:col-span-2">
               {s.isLoading ? <Skeleton className="h-24 w-full" /> : <AllocationBar segments={segments} total={s.deposits} />}
               <div className="mt-6 grid gap-x-8 border-t border-line pt-4 sm:grid-cols-2">
                 <KeyValue label="Wallet balance (not deposited)" value={fmtUsd(s.walletBalance)} />
@@ -94,7 +94,7 @@ export default function PortfolioPage() {
             </Card>
           </div>
 
-          <div className="grid gap-5 lg:grid-cols-2">
+          <div className="grid gap-5 @3xl:grid-cols-2">
             <Card
               title="Open positions"
               action={
