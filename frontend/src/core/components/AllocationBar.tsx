@@ -57,9 +57,9 @@ export function AllocationBar({ segments, total }: { segments: AllocationSegment
             <span className="mt-1.5 h-2.5 w-2.5 shrink-0 rounded-[3px]" style={{ background: s.color }} />
             <div>
               <div className="text-[13px] text-muted">{s.label}</div>
-              <div className="tabular text-[15px] font-semibold text-ink">
+              <div className="display text-[18px] leading-tight font-medium text-ink">
                 <Ticker value={fmtUsd(s.value)} />
-                <span className="ml-1.5 text-xs font-normal text-subtle">
+                <span className="ml-1.5 font-sans text-xs font-normal text-subtle">
                   {t > 0 ? `${((toNumber(s.value) / t) * 100).toFixed(1)}%` : "—"}
                 </span>
               </div>

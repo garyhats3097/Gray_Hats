@@ -2,7 +2,7 @@
 
 /* Design tokens — light theme only ("Cobalt Pop"). Use these names in classes, e.g. bg-surface, text-muted. */
 @theme {
-  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Poppins", ui-sans-serif, system-ui, sans-serif;
   --font-display: "Newsreader", "Iowan Old Style", Georgia, serif;
   --font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
 
