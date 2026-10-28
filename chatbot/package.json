@@ -4,9 +4,12 @@
   "version": "0.1.0",
   "type": "module",
   "description": "Help chatbot for the Modular DeFi site (free Gemini or Groq API, no dependencies)",
-  "engines": { "node": ">=18" },
+  "engines": {
+    "node": ">=18"
+  },
   "scripts": {
     "start": "node server.mjs",
-    "ask": "node server.mjs"
+    "ask": "node server.mjs",
+    "doctor": "node server.mjs --doctor"
   }
 }

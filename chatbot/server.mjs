@@ -15,6 +15,10 @@ import { createServer } from "node:http";
 import { readFileSync, existsSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { setDefaultResultOrder } from "node:dns";
+
+// WSL often has no working IPv6 route; trying IPv6 first can make requests hang until they time out.
+setDefaultResultOrder("ipv4first");
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(HERE, "..");
@@ -301,9 +305,37 @@ const server = createServer(async (req, res) => {
   }
 });
 
+/** `npm run doctor`: checks the internet connection, the key and each model, with timings. */
+async function doctor() {
+  console.log(`Provider: ${PROVIDER}   key set: ${P.key ? "yes" : "NO"}`);
+  const t0 = Date.now();
+  try {
+    const host = PROVIDER === "groq" ? "https://api.groq.com/openai/v1/models" : "https://generativelanguage.googleapis.com/v1beta/models";
+    const headers = PROVIDER === "groq" ? { authorization: `Bearer ${P.key}` } : { "x-goog-api-key": P.key ?? "" };
+    const res = await fetch(host, { headers, signal: AbortSignal.timeout(10_000) });
+    console.log(`1) Reach the AI service: OK, HTTP ${res.status} in ${((Date.now() - t0) / 1000).toFixed(1)}s ${res.ok ? "(key accepted)" : "— " + providerMessage(await res.text())}`);
+  } catch (e) {
+    console.log(`1) Reach the AI service: FAILED after ${((Date.now() - t0) / 1000).toFixed(1)}s (${e?.cause?.code || e?.name || e}) — network problem, not the bot`);
+    return;
+  }
+  const models = PROVIDER === "groq" ? [P.model] : GEMINI_MODELS;
+  for (const model of models) {
+    const t = Date.now();
+    try {
+      const reply =
+        PROVIDER === "groq" ? await askGroq("Reply with just: OK", [{ role: "user", text: "test" }]) : await askGemini(model, "Reply with just: OK", [{ role: "user", text: "test" }]);
+      console.log(`2) ${model}: OK in ${((Date.now() - t) / 1000).toFixed(1)}s → ${reply.slice(0, 40)}`);
+    } catch (e) {
+      console.log(`2) ${model}: FAILED after ${((Date.now() - t) / 1000).toFixed(1)}s → ${e?.name === "TimeoutError" ? "no answer in time" : e.message}`);
+    }
+  }
+}
+
 // `node server.mjs "question"` asks once from the terminal (handy to test the key).
 const question = process.argv.slice(2).join(" ").trim();
-if (question) {
+if (question === "--doctor") {
+  doctor();
+} else if (question) {
   answer([{ role: "user", text: question }], { note: "asked from the terminal, no wallet" })
     .then((reply) => console.log(reply))
     .catch((e) => {
