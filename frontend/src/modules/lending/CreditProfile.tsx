@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { CheckCircle2, ShieldAlert, XCircle } from "lucide-react";
 import { Badge, Card, KeyValue, Skeleton, cx } from "../../core/components/ui";
 import { fmtUsd, toNumber } from "../../core/lib/format";
@@ -6,7 +7,7 @@ import { TIERS, useCredit } from "./hooks";
 /** Tier bands get darker with a higher tier (one hue, light → dark). */
 const BAND_COLORS = ["#dbe5fb", "#b3c7f7", "#6f95ee", "#1d4ed8"];
 
-function ScoreBar({ score }: { score: number }) {
+function ScoreBar({ score, tier }: { score: number; tier: number }) {
   const bands = TIERS.map((t, i) => ({ ...t, from: t.minScore, to: TIERS[i + 1]?.minScore ?? 100 }));
   return (
     <div>
@@ -22,14 +23,18 @@ function ScoreBar({ score }: { score: number }) {
           aria-label={`Score ${score}`}
         />
       </div>
-      {/* Each name starts where its tier starts; the last one is right-aligned so nothing is cut off. */}
-      <div className="relative mt-2 h-4 text-[11px] whitespace-nowrap text-subtle">
+      {/* Legend instead of labels under the bar: the top bands are too narrow for their names. */}
+      <ul className="mt-3 grid grid-cols-2 gap-x-3 gap-y-1.5 text-[12px]">
         {bands.map((b, i) => (
-          <span key={b.id} className="absolute" style={i === bands.length - 1 ? { right: 0 } : { left: `${b.from}%` }} title={`${b.name}: ${b.from}–${b.to}`}>
-            {b.name}
-          </span>
+          <li key={b.id} className={cx("flex min-w-0 items-center gap-1.5", i === tier ? "font-semibold text-ink" : "text-subtle")}>
+            <span aria-hidden className="h-2 w-2 shrink-0 rounded-full" style={{ background: BAND_COLORS[i] }} />
+            <span className="truncate">{b.name}</span>
+            <span className="tabular ml-auto shrink-0">
+              {b.from}+ · {b.ltvPct}%
+            </span>
+          </li>
         ))}
-      </div>
+      </ul>
     </div>
   );
 }
@@ -44,6 +49,18 @@ function Row({ label, detail, points, max, negative }: { label: string; detail: 
       <span className={cx("tabular shrink-0 font-semibold", negative && points > 0 && "text-negative")}>
         {negative ? (points > 0 ? `−${points}` : "0") : `${points}${max !== undefined ? ` / ${max}` : ""}`}
       </span>
+    </div>
+  );
+}
+
+function Eligibility({ icon, title, children }: { icon: ReactNode; title: string; children: ReactNode }) {
+  return (
+    <div className="flex items-start gap-2.5">
+      <span className="mt-0.5 shrink-0">{icon}</span>
+      <div className="min-w-0">
+        <p className="font-semibold text-ink">{title}</p>
+        <p className="mt-0.5 leading-relaxed text-muted">{children}</p>
+      </div>
     </div>
   );
 }
@@ -77,7 +94,9 @@ export function CreditProfile() {
     <Card
       title="Credit profile"
       info="Your score comes from your real on-chain history in this protocol. It decides how much you can borrow — the best tier can borrow more than its collateral."
-      action={<Badge tone={t.defaulted ? "negative" : t.tier >= 2 ? "positive" : t.tier === 1 ? "accent" : "neutral"}>{t.defaulted ? "Defaulted" : tier.name}</Badge>}
+      action={
+        <Badge tone={t.defaulted ? "negative" : t.tier >= 2 ? "positive" : t.tier === 1 ? "accent" : "neutral"}>{t.defaulted ? "Defaulted" : tier.name}</Badge>
+      }
     >
       <div className="grid gap-6 md:grid-cols-2">
         <div>
@@ -86,35 +105,28 @@ export function CreditProfile() {
             <span className="mb-1 text-sm text-muted">/ 100</span>
           </div>
           <div className="mt-4">
-            <ScoreBar score={score} />
+            <ScoreBar score={score} tier={t.defaulted ? -1 : t.tier} />
           </div>
 
-          <div className="mt-5">
+          <div className="mt-5 rounded-xl bg-sunken/70 px-3.5 py-3 text-[13px]">
             {t.defaulted ? (
-              <p className="flex items-start gap-2 text-[13px] text-ink">
-                <ShieldAlert size={16} className="mt-0.5 shrink-0 text-negative" />
-                <span>
-                  <b>Not eligible for undercollateralized loans.</b> A lending loan of yours was liquidated, so your score is 0 for good. You can
-                  still borrow up to 75% of your collateral.
-                </span>
-              </p>
+              <Eligibility icon={<ShieldAlert size={16} className="text-negative" />} title="Not eligible for undercollateralized loans">
+                A lending loan was liquidated, so your score is 0 for good. You can still borrow up to 75% of your collateral.
+              </Eligibility>
             ) : eligible ? (
-              <p className="flex items-start gap-2 text-[13px] text-ink">
-                <CheckCircle2 size={16} className="mt-0.5 shrink-0 text-positive" />
-                <span>
-                  <b>Eligible for undercollateralized loans.</b> You can borrow up to {prime.ltvPct}% of your collateral, with at most{" "}
-                  <b>{fmtUsd(t.unsecuredAllowance)}</b> above it (25% of what you've repaid).
-                </span>
-              </p>
+              <Eligibility icon={<CheckCircle2 size={16} className="text-positive" />} title="Eligible for undercollateralized loans">
+                Borrow up to {prime.ltvPct}% of your collateral, at most <b className="text-ink">{fmtUsd(t.unsecuredAllowance)}</b> above it.
+              </Eligibility>
             ) : (
-              <p className="flex items-start gap-2 text-[13px] text-ink">
-                <XCircle size={16} className="mt-0.5 shrink-0 text-subtle" />
-                <span>
-                  <b>Not yet eligible for undercollateralized loans.</b> Reach {prime.minScore} points ({Math.max(prime.minScore - score, 0)} more) for the
-                  Prime tier.
-                  {next && next.id !== 3 && ` Next: ${next.name} at ${next.minScore} points (borrow up to ${next.ltvPct}%).`}
-                </span>
-              </p>
+              <Eligibility icon={<XCircle size={16} className="text-subtle" />} title="Not yet eligible for undercollateralized loans">
+                <b className="text-ink">{Math.max(prime.minScore - score, 0)} more points</b> to reach Prime ({prime.minScore}).
+                {next && next.id !== 3 && (
+                  <>
+                    {" "}
+                    Next up: {next.name} at {next.minScore}, borrow up to {next.ltvPct}%.
+                  </>
+                )}
+              </Eligibility>
             )}
           </div>
 
@@ -137,15 +149,25 @@ export function CreditProfile() {
         <div>
           <p className="mb-1 text-[13px] font-medium text-muted">How your score is built</p>
           <div className="divide-y divide-line">
-            <Row label="Loans repaid in full" detail={`${r.loansRepaid} loan${r.loansRepaid === 1 ? "" : "s"} · +10 each`} points={Number(b.loansPoints)} max={30} />
+            <Row
+              label="Loans repaid in full"
+              detail={`${r.loansRepaid} loan${r.loansRepaid === 1 ? "" : "s"} · +10 each`}
+              points={Number(b.loansPoints)}
+              max={30}
+            />
             <Row label="Total amount repaid" detail={`${fmtUsd(r.repaidVolume)} · +1 per $100`} points={Number(b.volumePoints)} max={30} />
-            <Row label="Account age" detail={r.firstSeen > 0n ? `${ageHours} hour${ageHours === 1 ? "" : "s"} · +1 per hour` : "Starts at your first loan or trade"} points={Number(b.agePoints)} max={10} />
+            <Row
+              label="Account age"
+              detail={r.firstSeen > 0n ? `${ageHours} hour${ageHours === 1 ? "" : "s"} · +1 per hour` : "Starts at your first loan or trade"}
+              points={Number(b.agePoints)}
+              max={10}
+            />
             <Row label="Vault deposit (portfolio)" detail={`+1 per $500 deposited`} points={Number(b.portfolioPoints)} max={30} />
             <Row label="Perpetuals liquidations" detail={`${r.perpsLiquidations} · −10 each`} points={Number(b.penaltyPoints)} negative />
           </div>
           <p className="mt-3 text-xs text-subtle">
-            Any lending liquidation sets the score to 0 permanently. Scores come only from on-chain activity in this protocol; history before
-            your first loan or trade isn't counted.
+            Any lending liquidation sets the score to 0 permanently. Scores come only from on-chain activity in this protocol; history before your first loan or
+            trade isn't counted.
           </p>
           {toNumber(c.totalBadDebt) > 0 && (
             <p className="mt-2 text-xs text-subtle">Protocol bad debt from defaulted unsecured loans: {fmtUsd(c.totalBadDebt)}</p>
