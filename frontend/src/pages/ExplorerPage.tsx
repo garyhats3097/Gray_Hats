@@ -120,7 +120,7 @@ export default function ExplorerPage() {
     <>
       <PageHeader title="Blockchain Explorer" subtitle="A live view of the local chain: every block, transaction, event and user position." />
 
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4">
+      <div className="grid grid-cols-2 gap-3 @3xl:grid-cols-4 @3xl:gap-4">
         <StatCard label="Latest block" value={chain.data ? `#${chain.data.latest}` : "—"} sub="Updates live" />
         <StatCard label="Chain ID" value={String(chainId)} sub="Anvil (local)" />
         <StatCard
@@ -132,11 +132,11 @@ export default function ExplorerPage() {
         <StatCard label="Users" value={users.data ? String(users.data.length) : "—"} sub={`${protocol.positionsOpened ?? "—"} perp positions opened`} />
       </div>
 
-      <div className="mt-5 grid items-start gap-5 lg:grid-cols-3">
+      <div className="mt-5 grid items-start gap-5 @4xl:grid-cols-3">
         <Card
           title="Vault solvency"
           info="Checks the vault's core rule live: the tokens it holds must cover everything it owes to users and module pools."
-          className="lg:col-span-2"
+          className="@4xl:col-span-2"
           action={
             protocol.solvent === undefined ? null : protocol.solvent ? (
               <Badge tone="positive">
@@ -226,7 +226,7 @@ export default function ExplorerPage() {
         )}
       </Card>
 
-      <div className="mt-5 grid gap-5 lg:grid-cols-3">
+      <div className="mt-5 grid gap-5 @4xl:grid-cols-3">
         <Card title="Latest blocks" info="Anvil mines a new block for every transaction.">
           {chain.isLoading ? (
             <Spinner />
@@ -257,7 +257,7 @@ export default function ExplorerPage() {
 
         <Card
           title="Transactions"
-          className="lg:col-span-2"
+          className="@4xl:col-span-2"
           padded={false}
           action={<span className="text-xs text-subtle">Last 40 blocks · click a row for details</span>}
         >

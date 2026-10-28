@@ -208,8 +208,10 @@ export function Stat({
   color?: string;
 }) {
   const flash = useFlash(value);
+  // Long numbers ("$1,000,000.00") shrink to fit the stat's width instead of being cut off.
+  const fit = typeof value === "string" ? { fontSize: `min(var(--stat-size), calc(100cqw / ${(value.length * 0.6).toFixed(1)}))` } : undefined;
   return (
-    <div className="min-w-0">
+    <div className="@container min-w-0">
       <div className="flex items-center gap-1.5 text-[13px] font-semibold text-muted">
         {label}
         {info && <InfoTip text={info} />}
@@ -219,12 +221,12 @@ export function Stat({
       ) : (
         <div
           className={cx(
-            "display -mx-1 mt-1 inline-block max-w-full truncate rounded-md px-1 text-[23px] leading-tight font-medium sm:text-[28px]",
+            "display -mx-1 mt-1 inline-block max-w-full truncate rounded-md px-1 leading-tight font-medium [--stat-size:23px] sm:[--stat-size:28px]",
             tone === "positive" && "text-positive",
             tone === "negative" && "text-negative",
             flash,
           )}
-          style={tone ? undefined : { color }}
+          style={{ fontSize: "var(--stat-size)", ...fit, ...(tone ? undefined : { color }) }}
         >
           {typeof value === "string" ? <Ticker value={value} /> : value}
         </div>

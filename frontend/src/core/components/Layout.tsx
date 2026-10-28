@@ -123,7 +123,8 @@ export function Layout({ children }: { children: ReactNode }) {
   const module = MODULES.find((m) => location.pathname.startsWith(m.path));
 
   return (
-    <div className="min-h-screen lg:pl-64">
+    // overflow-x-clip: decorations (e.g. the welcome glow) may extend past the edge without causing a sideways scroll.
+    <div className="min-h-screen overflow-x-clip lg:pl-64">
       {/* Desktop sidebar */}
       <aside className="fixed inset-y-0 left-0 hidden w-64 border-r border-frame bg-canvas/80 backdrop-blur lg:block">
         <SidebarContent />
@@ -160,7 +161,7 @@ export function Layout({ children }: { children: ReactNode }) {
         <ConnectButton />
       </header>
 
-      <main ref={mainRef} data-module={module?.id} className="mx-auto max-w-6xl px-4 py-6 sm:px-8 sm:py-8">
+      <main ref={mainRef} data-module={module?.id} className="@container mx-auto max-w-6xl px-4 py-6 sm:px-8 sm:py-8">
         <ChainStatusBanner />
         <WrongNetworkBanner />
         <div key={location.pathname} className="animate-fade">

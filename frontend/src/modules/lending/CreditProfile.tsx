@@ -22,9 +22,10 @@ function ScoreBar({ score }: { score: number }) {
           aria-label={`Score ${score}`}
         />
       </div>
-      <div className="mt-2 flex text-[11px] text-subtle">
-        {bands.map((b) => (
-          <span key={b.id} style={{ width: `${b.to - b.from}%` }} className="truncate">
+      {/* Each name starts where its tier starts; the last one is right-aligned so nothing is cut off. */}
+      <div className="relative mt-2 h-4 text-[11px] whitespace-nowrap text-subtle">
+        {bands.map((b, i) => (
+          <span key={b.id} className="absolute" style={i === bands.length - 1 ? { right: 0 } : { left: `${b.from}%` }} title={`${b.name}: ${b.from}–${b.to}`}>
             {b.name}
           </span>
         ))}
