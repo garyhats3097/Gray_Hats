@@ -1,6 +1,6 @@
 import { CandlestickChart, HandCoins, Repeat2, ShieldCheck, Vault } from "lucide-react";
 import { Link } from "react-router-dom";
-import { ConnectButton } from "./ConnectButton";
+import { ConnectChoices } from "./ConnectButton";
 
 const POINTS = [
   { icon: Vault, title: "One shared vault", body: "Deposit collateral once. Every module draws on the same ledger." },
@@ -87,7 +87,7 @@ export function Welcome() {
         Connect your wallet to manage collateral, explore perpetual trading, and access lending through one shared financial core.
       </p>
       <div className="anim-rise mt-8 flex flex-col items-center gap-3">
-        <ConnectButton size="lg" />
+        <ConnectChoices />
         <Link to="/help" className="text-[13px] text-muted underline decoration-line-strong underline-offset-4 transition-colors hover:text-ink hover:decoration-ink">
           First time? Set up MetaMask for the local network
         </Link>

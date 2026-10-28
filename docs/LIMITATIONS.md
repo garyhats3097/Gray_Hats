@@ -127,6 +127,11 @@ These are the most important limitations. In this prototype the admin and the mo
 
 ## 7. Frontend and infrastructure gaps ⚪
 
+- **Demo wallet** (for visitors without MetaMask): a random private key created in the browser and stored
+  in `localStorage` unencrypted, signing without confirmation. Acceptable only because it holds test
+  tokens on our test chain; never reuse this pattern with real funds. On a local chain it is funded with
+  test ETH from Anvil's public account #9; a hosted deployment needs the `/api/faucet` endpoint instead.
+
 - **History reads every event since block 0** on each refresh. That's fine on a fresh local chain
   but slow on a long-lived network. A production app needs an indexer (e.g. a subgraph).
 - **Data refreshes every 4 seconds** by polling, not by live subscriptions.

@@ -103,12 +103,22 @@ allocate collateral, borrow and repay in full a few times.
 - Liquidity panel shows no funded inventory: quotes are indicative only. Future work: inventory from
   the vault, execution, risk limits.
 
-## Wallet and network setup (MetaMask)
+## Wallet and network setup
 
-- Add a custom network: RPC URL http://127.0.0.1:8545, chain ID 31337, currency ETH. Name e.g.
+Two ways to connect (button **Connect Wallet**, top right, or on the welcome screen):
+- **MetaMask** (your own wallet).
+- **Demo wallet** ("Don't have a wallet? Try with a demo wallet"): no install. The site creates a random test
+  account in this browser, gives it test ETH for fees and 10,000 test mUSDC, and signs transactions without
+  pop-ups. A yellow "Demo" badge shows next to the address. The same account comes back after a reload in the same
+  browser; clearing site data or using another browser gives a new one. The account menu has **Start fresh** (new
+  empty demo account) and **Disconnect**. Test money only.
+
+MetaMask setup:
+- Help & Setup page → **Add Anvil (local) to MetaMask** button adds the network in one click. Or add it by hand: RPC URL http://127.0.0.1:8545, chain ID 31337, currency ETH. Name e.g.
   "Anvil (local)". The chain must be started first with `./scripts/start-chain.sh` (inside WSL on
   Windows).
-- Import the test account the team uses (Anvil account #1, address 0x7099…79C8) with its **public
+- **Get test mUSDC** (Shared Vault page) also gives a new account test ETH for transaction fees if it has none.
+- Team laptops can instead import the test account the team uses (Anvil account #1, address 0x7099…79C8) with its **public
   test key** from the Help page. Test keys are public — never use them on a real network, and never
   put real funds in them.
 - The site never asks for a private key or seed phrase. Never share yours with anyone, including this
