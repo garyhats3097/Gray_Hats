@@ -75,9 +75,12 @@ const KNOWLEDGE_FILES = [
   "docs/MARKET_MAKER.md",
   "docs/LIMITATIONS.md",
 ];
+// Groq's free tier allows only ~6–8k tokens per minute, so it gets the site guide alone (~3.5k tokens),
+// which already covers every page, rule, fix and term. CHAT_KNOWLEDGE=full/compact overrides this.
+const COMPACT_KNOWLEDGE = (process.env.CHAT_KNOWLEDGE ?? (PROVIDER === "groq" ? "compact" : "full")) === "compact";
 
 function loadKnowledge() {
-  return KNOWLEDGE_FILES.filter((f) => existsSync(join(ROOT, f)))
+  return (COMPACT_KNOWLEDGE ? KNOWLEDGE_FILES.slice(0, 1) : KNOWLEDGE_FILES).filter((f) => existsSync(join(ROOT, f)))
     .map((f) => `<document path="${f}">\n${readFileSync(join(ROOT, f), "utf8").trim()}\n</document>`)
     .join("\n\n");
 }
@@ -107,7 +110,7 @@ ${loadKnowledge()}
 </knowledge>
 
 <live_data note="Read from the blockchain by the site just now. Amounts in USD (1 mUSDC = $1).">
-${JSON.stringify(context ?? { wallet: "not connected" }, null, 2)}
+${JSON.stringify(context ?? { wallet: "not connected" })}
 </live_data>`;
 }
 
@@ -137,24 +140,28 @@ function explainHttpError(status, body, model) {
   if (status === 429) return new ChatError(429, "The free AI quota is used up for now. Wait a minute and try again.", true);
   if (status === 400 && /api key/i.test(detail)) return new ChatError(500, `The AI key is invalid. Check ${P.keyName} in chatbot/.env.`);
   if (status === 401 || status === 403) return new ChatError(500, `The AI key was refused. Check ${P.keyName} in chatbot/.env.`);
+  if (status === 413) return new ChatError(413, "The question was too large for the free AI plan. Start a new conversation and try again.", true);
   if (status === 404) return new ChatError(500, `AI model "${model}" was not found. Set another model in chatbot/.env (see .env.example).`, true);
   if (status === 500 || status === 503) return new ChatError(503, "The free AI service is busy right now. Try again in a minute.", true);
   return new ChatError(502, `The AI service returned an error (${status})${detail ? `: ${detail}` : ""}.`);
 }
 
-/** The configured Gemini model first, then other free models if it is busy or missing. */
-const GEMINI_MODELS = [
-  ...new Set([P.model, ...(process.env.GEMINI_FALLBACK_MODELS ?? "gemini-3.8-flash,gemini-flash-latest").split(",")].map((m) => m.trim()).filter(Boolean)),
-];
+/** The configured model first, then other free models if it is busy, over its limit or missing. */
+const FALLBACKS = {
+  gemini: process.env.GEMINI_FALLBACK_MODELS ?? "gemini-3.8-flash,gemini-flash-latest",
+  groq: process.env.GROQ_FALLBACK_MODELS ?? "llama-3.1-8b-instant,openai/gpt-oss-20b",
+};
+const MODELS = [...new Set([P.model, ...FALLBACKS[PROVIDER].split(",")].map((m) => m.trim()).filter(Boolean))];
 
-async function askGeminiWithFallback(system, messages) {
+async function askWithFallback(system, messages) {
+  const ask = PROVIDER === "groq" ? askGroq : askGemini;
   let lastError;
-  for (const model of GEMINI_MODELS) {
+  for (const model of MODELS) {
     // A busy model often answers on a second try a moment later.
     for (let attempt = 0; attempt < 2; attempt++) {
       const started = Date.now();
       try {
-        const text = await askGemini(model, system, messages);
+        const text = await ask(model, system, messages);
         console.log(`[chat] ${model}: answered in ${((Date.now() - started) / 1000).toFixed(1)}s`);
         return text;
       } catch (e) {
@@ -209,20 +216,20 @@ async function askGemini(model, system, messages, thinking = thinkingFor(model))
   return text;
 }
 
-async function askGroq(system, messages) {
+async function askGroq(model, system, messages) {
   const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
     method: "POST",
     headers: { "content-type": "application/json", authorization: `Bearer ${P.key}` },
     signal: AbortSignal.timeout(TIMEOUT_MS),
     body: JSON.stringify({
-      model: P.model,
+      model,
       temperature: 0.3,
-      max_tokens: 1500,
+      max_tokens: 1024,
       messages: [{ role: "system", content: system }, ...messages.map((m) => ({ role: m.role, content: m.text }))],
     }),
   });
   const body = await res.text();
-  if (!res.ok) throw explainHttpError(res.status, body, P.model);
+  if (!res.ok) throw explainHttpError(res.status, body, model);
   const text = JSON.parse(body).choices?.[0]?.message?.content?.trim();
   if (!text) throw new ChatError(502, "The AI gave no answer. Try rephrasing the question.");
   return text;
@@ -232,7 +239,7 @@ export async function answer(messages, context) {
   if (!P.key) throw new ChatError(503, `The assistant has no AI key yet. Put ${P.keyName}=... in chatbot/.env (free key: ${P.keyUrl}) and restart it.`);
   const system = systemPrompt(context);
   try {
-    return PROVIDER === "groq" ? await askGroq(system, messages) : await askGeminiWithFallback(system, messages);
+    return await askWithFallback(system, messages);
   } catch (e) {
     if (e instanceof ChatError) throw e;
     if (e?.name === "TimeoutError") throw new ChatError(504, "The AI took too long to answer. Try again.");
@@ -326,12 +333,12 @@ async function doctor() {
     console.log(`1) Reach the AI service: FAILED after ${((Date.now() - t0) / 1000).toFixed(1)}s (${e?.cause?.code || e?.name || e}) — network problem, not the bot`);
     return;
   }
-  const models = PROVIDER === "groq" ? [P.model] : GEMINI_MODELS;
+  const models = MODELS;
   for (const model of models) {
     const t = Date.now();
     try {
       const reply =
-        PROVIDER === "groq" ? await askGroq("Reply with just: OK", [{ role: "user", text: "test" }]) : await askGemini(model, "Reply with just: OK", [{ role: "user", text: "test" }]);
+        await (PROVIDER === "groq" ? askGroq : askGemini)(model, "Reply with just: OK", [{ role: "user", text: "test" }]);
       console.log(`2) ${model}: OK in ${((Date.now() - t) / 1000).toFixed(1)}s → ${reply.slice(0, 40)}`);
     } catch (e) {
       console.log(`2) ${model}: FAILED after ${((Date.now() - t) / 1000).toFixed(1)}s → ${e?.name === "TimeoutError" ? "no answer in time" : e.message}`);
